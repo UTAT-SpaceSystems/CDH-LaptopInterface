@@ -6,7 +6,7 @@
 /*@{*/
 #define SPI_RESET		0xC0
 #define	SPI_READ		0x03
-#define	SPI_READ_RX		0x90
+#define	SPI_READ_RX		0x90f
 #define	SPI_WRITE		0x02
 #define	SPI_WRITE_TX	0x40
 #define	SPI_RTS			0x80
