@@ -15,8 +15,8 @@ color blue = color(0, 0, 47);
 color red = color(255, 0, 0);
 color green = color(58, 255, 41);
 color grey = color(200, 200, 200);
-String[] fields = {"TEMP (K)", "VOLTAGE (V)", "PARAM 3", "PARAM 4" };
-String[] rows = { "ADCS", "CDH", "COMS", "EPS", "PAYLOAD" };
+String[] fields = {"TEMP (K)", "VOLTAGE (V)", "PARAM 3", "PARAM 4", "PARAM5", "PARAM6", "PARAM7", "PARAM8", "PARAM9"};
+String[] rows = { "ADCS", "CDH", "COMS", "EPS", "PAYLOAD"};
 boolean bus_status = false;
 
 /*
@@ -24,15 +24,6 @@ boolean bus_status = false;
 int baud_rate = 9600;
 String inString;
 Serial myPort;
-*/
-
-/*
-int y_first = 200;
-int y_offset = 25;
-
-int x_subsys = 10;
-int x_temp = 200;
-int x_volt = 300;
 */
 
 /*
@@ -110,27 +101,35 @@ void draw()
   
   int left_justify = 15;
   text("SUBSYSTEMS", left_justify, header_height + 30);
-  int initial_spacing = 225;
+  int initial_spacing = 200;
+  
+  //Dynamically Adjusts the widths of columns
   for(int i = 0; i < fields.length; i++)
   {
-    text(fields[i], initial_spacing + (i * 150), header_height + 30);
+    text(fields[i], initial_spacing + (i * (displayWidth - initial_spacing) / fields.length), header_height + 30);
     fill(grey);
-    rect(initial_spacing - 10 + (i * 150), header_height, 1, displayHeight - header_height - 130);
+    rect(initial_spacing - 10 + (i * (displayWidth - initial_spacing) / fields.length), header_height, 1, displayHeight - header_height - 130);
     resetFormat();
   }
-  
+  int underline_height = 45;
+  //Underlines the column headers
   fill(grey);
-  rect(0, header_height + 45, displayWidth, 1);
+  rect(0, header_height + underline_height, displayWidth, 1);
   resetFormat();
   
+  
+  int footer_height = 130;
+  
+  //Drawing the row labels 
   for(int i = 0; i < rows.length; i++)
   {
-    text(rows[i], left_justify, 100 + header_height + (i*50));
+    //Have to figure out how to dynamically describe the 20
+    text(rows[i], left_justify, header_height + underline_height + 20 + (i * ((displayHeight - header_height - underline_height - footer_height) / rows.length)));
   }
   
-  rect(0, displayHeight - 130, displayWidth, 1);
-  text("LOG:", left_justify, displayHeight - 108);
-  rect(0, displayHeight - 100, displayWidth, 1);
+  rect(0, displayHeight - footer_height, displayWidth, 1);
+  text("LOG:", left_justify, displayHeight - footer_height - 12);
+  rect(0, displayHeight - footer_height - 30, displayWidth, 1);
   
   /*
   textFont(title, 45);
@@ -164,7 +163,8 @@ void serialEvent (Serial myPort)
       default:
         break;
     }
-  } 
+  }
+  
   // Data
   else if (inString.substring(0, 3).equals("DA:"))
   {
