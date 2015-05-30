@@ -111,8 +111,6 @@ uint8_t mcp2515_read_status(uint8_t type)
 // -------------------------------------------------------------------------
 uint8_t mcp2515_init(uint8_t speed)
 {
-		
-	
 	SET(MCP2515_CS);
 	SET_OUTPUT(MCP2515_CS);
 	
@@ -156,17 +154,18 @@ uint8_t mcp2515_init(uint8_t speed)
 */	
 	spi_putc((1<<PHSEG21));		// Bitrate 250 kbps at 16 MHz
 	spi_putc((1<<BTLMODE)|(1<<PHSEG11));
+        spi_putc((1<<BRP1)|(1<<BRP0));
 	//spi_putc(1<<BRP0);
-    spi_putc(speed);
+        spi_putc(speed);
 
 	// activate interrupts
 	spi_putc((1<<RX1IE)|(1<<RX0IE));
 	SET(MCP2515_CS);
 	
 	// test if we could read back the value => is the chip accessible?
-	if (mcp2515_read_register(CNF1) != speed) {
+	if (mcp2515_read_register(CNF1) != speed) 
+        {
 		SET(LED2_HIGH);
-
 		return false;
 	}
 	
@@ -189,8 +188,10 @@ uint8_t mcp2515_init(uint8_t speed)
 // ----------------------------------------------------------------------------
 // check if there are any new messages waiting
 
-uint8_t mcp2515_check_message(void) {
-	return (!IS_SET(MCP2515_INT));
+uint8_t mcp2515_check_message(void) 
+{
+    return mcp2515_read_register(RX1IE);
+	//return (IS_SET(MCP2515_INT));
 }
 
 // ----------------------------------------------------------------------------
@@ -211,6 +212,7 @@ uint8_t mcp2515_check_free_buffer(void)
 // ----------------------------------------------------------------------------
 uint8_t mcp2515_get_message(tCAN *message)
 {
+      
 	// read status
 	uint8_t status = mcp2515_read_status(SPI_RX_STATUS);
 	uint8_t addr;
@@ -224,6 +226,7 @@ uint8_t mcp2515_get_message(tCAN *message)
 		addr = SPI_READ_RX | 0x04;
 	}
 	else {
+                
 		// Error: no message available
 		return 0;
 	}
