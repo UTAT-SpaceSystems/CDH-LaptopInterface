@@ -21,7 +21,7 @@ boolean bus_status = false;
 
 /*
 // Serial Constants
-int baud_rate = 9600;
+int baudRate = 9600;
 String inString;
 Serial myPort;
 */
@@ -144,32 +144,49 @@ void serialEvent (Serial myPort)
   in_string = myPort.readStringUntil('\n');
   text(in_string, 10, displayHeight - 180);
   // ID String
-  if (in_string.substring(0, 3).equals("ID:"))
+  if (in_string.substring(0, 4).equals("ID: "))
   {
     id_str = in_string.substring(3, in_string.length);
     id_int = Integer.parseInt(id_str);
     switch(id_int)
     {
-      case 0:
+      // CAN1_MB0
+      case 10:
         break;
-      case 1:
-        break
-      case 2:
+      // CAN1_MB1
+      case 11:
         break;
-      case 3:
+      // CAN1_MB2
+      case 12:
         break;
-      case 4:
+      // CAN1_MB3
+      case 13:
+        break;
+      // CAN1_MB4
+      case 14:
+        break;
+      // CAN1_MB5
+      case 15:
+        break;  
+      // CAN1_MB6
+      case 16:
+        break;
+      // CAN1_MB7
+      case 17:
         break;
       default:
+        // Data not adressed to any of the CAN1 (and later CAN0) mailboxes 
+        // will default output to the log
         break;
     }
   }
   
   // Data
-  else if (inString.substring(0, 3).equals("DA:"))
+  else if (inString.substring(0, 6).equals("DATA: "))
   {
-    data_str = in_string.substring(3, in_string.length).trim();
+    data_str = in_string.substring(6, in_string.length).trim();
     long data = Long.parseLong(data_str);
+   
   }
 }
 */
