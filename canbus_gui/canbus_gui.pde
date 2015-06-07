@@ -1,4 +1,6 @@
 // Imports
+import javax.swing.JOptionPane;
+
 import processing.serial.*;
 
 // Set GUI fullscreen
@@ -9,22 +11,28 @@ PImage crest;
 PFont mono, bold, title;
 
 // GUI Constants
+int header_height = 120;
+int footer_height = 130;
+int underline_height = 45;
 color white = color(255, 255, 255);
 color black = color(0, 0, 0);
 color blue = color(0, 0, 47);
 color red = color(255, 0, 0);
 color green = color(58, 255, 41);
 color grey = color(200, 200, 200);
-String[] fields = {"TEMP [K]", "VOLTAGE [V]", "CURRENT [mA]", "BATTERY %", "PRES [KPa]", "HUMIDITY", "PARAM7", "PARAM8", "PARAM9"};
-String[] rows = { "ADCS", "CDH", "COMS", "EPS", "PAYLOAD"};
+String[] fields = {"TEMP [K]", "VOLTAGE [V]", "CURRENT [mA]", "BATTERY %", "PRES [KPa]", "HUMIDITY %"};
+int[] column_centers = new int[fields.length];
+String[] rows = { "ADCS", "CDH", "COMS", "EPS", "PAYL"};
 boolean bus_status = false;
 
 // Subsystem properties
-
+Subsystem adcs, cdh, coms, eps, payl;
+int[] adcs_ids, cdh_ids, coms_ids, eps_ids, payl_ids;
 
 // Serial Constants
 int baudRate = 9600;
-String inString = "";
+String out_id, out_data;
+String in_string = "";
 Serial arduino;
 
 /*
@@ -34,11 +42,25 @@ Serial arduino;
 void setup()
 {
     size(displayWidth, displayHeight);
+    
     //Loading assets
     mono = loadFont("FreeSans-48.vlw");
     bold = loadFont("FreeSansBold-48.vlw");
     title = loadFont("FreeSansBoldOblique-48.vlw");
     crest = loadImage("crest.png");
+    
+    // Processing won't cooperate unless the int arrays are declared this way
+    adcs_ids = new int[]{};
+    cdh_ids = new int[]{10, 11, 12, 13, 14, 15, 16, 17};
+    coms_ids = new int[]{};
+    eps_ids = new int[]{};
+    payl_ids = new int[]{};
+    
+    adcs = new Subsystem(adcs_ids);
+    cdh = new Subsystem(cdh_ids);
+    coms = new Subsystem(coms_ids);
+    eps = new Subsystem(eps_ids);
+    payl = new Subsystem(payl_ids);
     
     println(Serial.list());
     arduino = new Serial(this, Serial.list()[0], baudRate);
@@ -54,24 +76,62 @@ void draw()
     
     serialEvent(arduino);
     
-    if (!inString.equals("#\n") && !inString.equals(""))
+    if (!in_string.equals("#\n") && !in_string.equals(""))
     {
         
-        if (inString.equals("READY\n"))
+        if (in_string.equals("READY\n"))
         {
             bus_status = true;
         }
-        else if (inString.equals("ERROR\n"))
+        else if (in_string.equals("ERROR\n"))
         {
             bus_status = false;
         }
         else
         {
-            int[] frame = parseData(inString);
-            println(frame);
+            int[] frame = parseData(in_string);
+            
+            /********************** ADCS *********************/
+            if (mailedTo(frame[0], adcs.mailbox_ids))
+            {
+            }
+            /********************** CDH **********************/
+            else if (mailedTo(frame[0], cdh.mailbox_ids))
+            {
+                if (!cdh.temp_avail)
+                {
+                    cdh.temp_avail = true;
+                }
+                
+                cdh.temp = frame[1];
+            }
+            /********************** COMS *********************/
+            else if (mailedTo(frame[0], coms.mailbox_ids))
+            {
+            }
+            /********************** EPS **********************/
+            else if (mailedTo(frame[0], eps.mailbox_ids))
+            {
+            }
+            /********************** PAYL *********************/
+            else if (mailedTo(frame[0], payl.mailbox_ids))
+            {
+            }
         }
     }
+}
+
+boolean mailedTo (int id, int[] mailbox_ids)
+{
     
+    for (int i = 0; i < mailbox_ids.length; i++)
+    {
+        if (id == mailbox_ids[i])
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void serialEvent(Serial arduino)
@@ -79,7 +139,7 @@ void serialEvent(Serial arduino)
     String temp = arduino.readStringUntil('\n');
     if(temp != null)
     {
-        inString = temp;
+        in_string = temp;
     }
 }
 
@@ -94,15 +154,82 @@ int[] parseData(String str)
     return values;
 }
 
+void displayValues(int rowY, Subsystem s)
+{
+    if (s.temp_avail)
+    {
+        fill(green);
+        text(s.temp, column_centers[0], rowY);
+    }
+    else
+    {
+        fill(red);
+        text("NA",  column_centers[0], rowY);
+    }
+    
+    if (s.volt_avail)
+    {
+        text(s.volt, column_centers[1], rowY);
+    }
+    else
+    {
+        fill(red);
+        text("NA", column_centers[1], rowY);
+    }
+    
+    if (s.curr_avail)
+    {
+        fill(green);
+        text(s.curr, column_centers[2], rowY);
+    }
+    else
+    {
+        fill(red);
+        text("NA",  column_centers[2], rowY);
+    }
+    
+    if (s.batt_avail)
+    {
+        fill(green);
+        text(s.batt, column_centers[3], rowY);
+    }
+    else
+    {
+        fill(red);
+        text("NA",  column_centers[3], rowY);
+    }
+    
+    if (s.pres_avail)
+    {
+        fill(green);
+        text(s.pres, column_centers[4], rowY);
+    }
+    else
+    {
+        fill(red);
+        text("NA",  column_centers[4], rowY);
+    }
+    
+    if (s.humid_avail)
+    {
+        fill(green);
+        text(s.humid, column_centers[5], rowY);
+    }
+    else
+    {
+        fill(red);
+        text("NA",  column_centers[5], rowY);
+    }
+    
+    resetFormat();
+}
 
 void renderGraphics()
 {
     //Header Definitions
     fill(blue);
-    int header_height = 120;
     rect(0, 0, displayWidth, header_height);
     
-    /********************************************************************************************/
     //Rendering Header
     textFont(title, 50);
     fill(white);
@@ -128,8 +255,22 @@ void renderGraphics()
     }
     text(message, CAN_offset[0] + 95, CAN_offset[1]);
     resetFormat();
-    /********************************************************************************************/
     
+    // Send message button
+    if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > header_height - 50 && mouseY < header_height - 10)
+    {
+        fill(white);
+    }
+    else
+    {
+        fill(grey);
+    }
+    
+    rect(displayWidth - 170, header_height - 50, 120, 40, 8);
+    fill(black);
+    text("SEND MSSG", displayWidth - 155, header_height - 25);
+    
+    // Subsystems and columns
     int left_justify = 15;
     text("SUBSYSTEMS", left_justify, header_height + 30);
     int initial_spacing = 200;
@@ -140,29 +281,51 @@ void renderGraphics()
         text(fields[i], initial_spacing + (i * (displayWidth - initial_spacing) / fields.length), header_height + 30);
         fill(grey);
         rect(initial_spacing - 10 + (i * (displayWidth - initial_spacing) / fields.length), header_height, 1, 250);
+        column_centers[i] = initial_spacing - 25 + (i * (displayWidth - initial_spacing) / fields.length) + ((displayWidth - initial_spacing) / fields.length)/2 ;
         resetFormat();
     }
     rect(0, 370, displayWidth, 1);
-    int underline_height = 45;
     //Underlines the column headers
     fill(grey);
     rect(0, header_height + underline_height, displayWidth, 1);
     resetFormat();
-    
-    
-    int footer_height = 130;
     
     //Drawing the row labels
     for(int i = 0; i < rows.length; i++)
     {
         //Have to figure out how to dynamically describe the 20
         text(rows[i], left_justify, header_height + underline_height + 25 + (i*40));   //((displayHeight - header_height - underline_height - footer_height) / rows.length)));
+        
+        switch(i)
+        {
+            case 0:
+            displayValues(header_height + underline_height + 25 + (i*40), adcs);
+            break;
+            case 1:
+            displayValues(header_height + underline_height + 25 + (i*40), cdh);
+            break;
+            case 2:
+            displayValues(header_height + underline_height + 25 + (i*40), coms);
+            break;
+            case 3:
+            displayValues(header_height + underline_height + 25 + (i*40), eps);
+            break;
+            case 4:
+            displayValues(header_height + underline_height + 25 + (i*40), payl);
+            break;
+        }
+        
     }
-    /*
-    rect(0, displayHeight - footer_height, displayWidth, 1);
-    text("LOG:", left_justify, displayHeight - footer_height - 12);
-    rect(0, displayHeight - footer_height - 30, displayWidth, 1);
-    */
+}
+
+void mouseClicked()
+{
+    if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > header_height - 50 && mouseY < header_height - 10)
+    {
+        String out_id = JOptionPane.showInputDialog("Enter the mailbox ID: ");
+        String out_data = JOptionPane.showInputDialog("Enter the message (Hex format: 00/00/00/00/00/00/00/00): ");
+        String message = "^" + out_id + "/" + out_data;
+    }
 }
 
 /*
@@ -174,5 +337,24 @@ void resetFormat()
 {
     fill(black);
     textFont(mono, 16);
+}
+
+class Subsystem
+{
+    int[] mailbox_ids;
+    
+    boolean temp_avail = false,
+    volt_avail = false,
+    curr_avail = false,
+    humid_avail = false,
+    batt_avail = false,
+    pres_avail = false;
+    float temp, volt, curr, humid, batt, pres;
+    
+    Subsystem (int[] mb_ids)
+    {
+        mailbox_ids = mb_ids;
+    }
+    
 }
 
