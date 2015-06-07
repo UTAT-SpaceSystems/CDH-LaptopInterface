@@ -29,35 +29,36 @@ void setup()
 {
     Serial.begin(9600);
     
-    Serial.println("Initializing ...");
+    //Serial.println("Initializing ...");
     
     // Set up SPI Communication
     // dataMode can be SPI_MODE0 or SPI_MODE3 only for MCP2515
     SPI.setClockDivider(SPI_CLOCK_DIV2);
     SPI.setDataMode(SPI_MODE0);
     SPI.setBitOrder(MSBFIRST);
-    SPI.begin();
-    
+    SPI.begin();   
     // Initialise MCP2515 CAN controller at the specified speed and clock frequency
     // CAN bus running at 250kbs at 16MHz
     int baudRate=CAN.Init(250,16);
     
     if(baudRate>0) 
     {
-        Serial.println("MCP2515 Init OK ...");
-        Serial.print("Baud Rate (kbps): ");
-        Serial.println(baudRate,DEC);
+        Serial.print("READY\n");
+        
+        //Serial.print("Baud Rate (kbps): ");
+        //Serial.println(baudRate,DEC);
     } 
     else 
     {
-        Serial.println("MCP2515 Init Failed ...");
+        Serial.print("ERROR\n");
     }
     
-    Serial.println("Ready ...");
+    //Serial.println("Ready ...");
 }
 
 void loop() 
 {
+    delay(100);
     message_0.id = 0;
     message_1.id = 0;
     
@@ -102,7 +103,7 @@ void loop()
     }
     else
     {
-        Serial.println("#");
+        Serial.print("#\n");
     }
     
     if(message_0.id>0) 
@@ -116,6 +117,19 @@ void loop()
         // Print message
         printCANMessage(message_1, 10);
     }
+    
+}
+
+
+// TO-DO
+void parseMessageFromSerial(String in)
+{
+}
+
+void sendCANMessage(Frame message)
+{
+  CAN.LoadBuffer(TXB0, message);
+  CAN.SendBuffer(TXB0);
 }
 
 /**
@@ -131,51 +145,27 @@ void printCANMessage(Frame message, unsigned long filter)
     {
         if (message.id == filter)
         {
-            Serial.print("ID: ");
-            // Serial.println(message.id, HEX);
-            // Serial.print("Extended: ");
-            /* if(message.ide) 
-            {
-                Serial.println("Yes");
-            } 
-            else 
-            {
-                Serial.println("No");
-            } */
-            // Serial.print("DLC: ");
-            // Serial.println(message.dlc,DEC);
-            for(i=0;i<message.dlc;i++) 
+            Serial.print("$");
+            Serial.print(message.id, HEX);
+            Serial.print("/");
+            for(i = 0; i < message.dlc; i++) 
             {
                 Serial.print(message.data[i],HEX);
-                Serial.print(" ");
+                Serial.print("/");
             }
             Serial.println();
         }
     }
     else
     {
-        if (message.id == filter)
+        Serial.print("$");
+        Serial.print(message.id, HEX);
+        Serial.print("/");
+        for(i = 0; i < message.dlc; i++) 
         {
-            Serial.print("$");
-            Serial.print(message.id, HEX);
-            // Serial.print("Extended: ");
-            /*if(message.ide) 
-            {
-                Serial.println("Yes");
-            } 
-            else 
-            {
-                Serial.println("No");
-            }
-            Serial.print("DLC: ");
-            Serial.println(message.dlc,DEC);*/
+            Serial.print(message.data[i],HEX);
             Serial.print("/");
-            for(i=0;i<message.dlc;i++) 
-            {
-                Serial.print(message.data[i],HEX);
-                Serial.print(" ");
-            }
-            Serial.println();
         }
+        Serial.println();  
     }
 }
