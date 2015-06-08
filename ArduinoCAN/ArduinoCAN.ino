@@ -19,8 +19,10 @@ Modified: 5/31/2015
 #define INT_PIN    2
 
 byte i = 0;
-// CAN message frames 
-Frame message_0, message_1;
+// String for sending messages on bus
+Frame message_out
+// CAN message receive frames 
+Frame message_in_0, message_in_1;
 // Create CAN object with pins as defined
 MCP2515 CAN(CS_PIN, INT_PIN);
 
@@ -59,8 +61,8 @@ void setup()
 void loop() 
 {
     delay(100);
-    message_0.id = 0;
-    message_1.id = 0;
+    message_in_0.id = 0;
+    message_in_1.id = 0;
     
     // This implementation utilizes the MCP2515 INT pin to flag received messages or other events
     if(CAN.Interrupt()) 
@@ -71,15 +73,16 @@ void loop()
         if(interruptFlags & RX0IF) 
         {
             // read from RX buffer 0
-            message_0 = CAN.ReadBuffer(RXB0);
+            message_in_0 = CAN.ReadBuffer(RXB0);
         }
         if(interruptFlags & RX1IF) 
         {
             // read from RX buffer 1
-            message_1 = CAN.ReadBuffer(RXB1);
+            message_in_1 = CAN.ReadBuffer(RXB1);
         }
         if(interruptFlags & TX0IF) 
         {
+            Serial.print("MSG SENT");
             // TX buffer 0 sent
         }
         if(interruptFlags & TX1IF) 
@@ -96,6 +99,7 @@ void loop()
         }
         if(interruptFlags & MERRF) 
         {
+            Serial.print("MSG ERR\n");
             // error handling code
             // if TXBnCTRL.TXERR set then transmission error
             // if message is lost TXBnCTRL.MLOA will be set
@@ -106,24 +110,44 @@ void loop()
         Serial.print("#\n");
     }
     
-    if(message_0.id>0) 
+    // Print Messages
+    if(message_in_0.id>0) 
     {
-        // Print message
-        printCANMessage(message_0, 10);
+        printCANMessage(message_in_0, 10);
+    }    
+    if(message_in_1.id>0) 
+    {
+        printCANMessage(message_in_1, 10);
     }
     
-    if(message_1.id>0) 
-    {
-        // Print message
-        printCANMessage(message_1, 10);
-    }
     
+    if (Serial.available())
+    {
+        String temp = Serial.read();
+        if(temp[0] == '^')
+        {
+            message_out = parseMessageFromSerial(temp);
+            sendCANMessage(message_out);
+        }
+    }
 }
 
 
-// TO-DO
-void parseMessageFromSerial(String in)
+
+Frame parseMessageFromSerial(String in)
 {
+    Frame f;
+    f.dlc = 8;
+    
+    String[] raw = split(in.substring(1, in.length() - 3), "/");
+    
+    f.id = unhex(raw[0]);
+    
+    for(int i = 0; i < f.dlc; i++ )
+    {
+        f.data[i] = unhex(raw[i + 1]);
+    }
+    return values;
 }
 
 void sendCANMessage(Frame message)

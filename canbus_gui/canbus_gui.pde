@@ -14,16 +14,28 @@ PFont mono, bold, title;
 int header_height = 120;
 int footer_height = 130;
 int underline_height = 45;
+int left_justify = 15;
+int initial_spacing = 200;
+
 color white = color(255, 255, 255);
 color black = color(0, 0, 0);
 color blue = color(0, 0, 47);
 color red = color(255, 0, 0);
 color green = color(58, 255, 41);
 color grey = color(200, 200, 200);
+
 String[] fields = {"TEMP [K]", "VOLTAGE [V]", "CURRENT [mA]", "BATTERY %", "PRES [KPa]", "HUMIDITY %"};
-int[] column_centers = new int[fields.length];
 String[] rows = { "ADCS", "CDH", "COMS", "EPS", "PAYL"};
+
+int[] column_centers = new int[fields.length];
+int[] can_status_pos = new int[2];
+int[] msg_status_pos = new int[2];
+
+String can_status_message;
 boolean bus_status = false;
+
+String msg_status_message;
+boolean msg_status = false;
 
 // Subsystem properties
 Subsystem adcs, cdh, coms, eps, payl;
@@ -56,6 +68,12 @@ void setup()
     eps_ids = new int[]{};
     payl_ids = new int[]{};
     
+    can_status_pos[0] = displayWidth - 170;
+    can_status_pos[1] = (header_height / 2) - 40;
+    
+    msg_status_pos[0] = displayWidth - 170;
+    msg_status_pos[1] = (header_height / 2) - 20;
+    
     adcs = new Subsystem(adcs_ids);
     cdh = new Subsystem(cdh_ids);
     coms = new Subsystem(coms_ids);
@@ -63,7 +81,10 @@ void setup()
     payl = new Subsystem(payl_ids);
     
     println(Serial.list());
-    arduino = new Serial(this, Serial.list()[0], baudRate);
+    if (Serial.list().length > 0)
+    {
+        arduino = new Serial(this, Serial.list()[0], baudRate);
+    }
 }
 
 void draw()
@@ -86,6 +107,14 @@ void draw()
         else if (in_string.equals("ERROR\n"))
         {
             bus_status = false;
+        }
+        else if (in_string.equals("MSG SENT\n"))
+        {
+            msg_status = true;
+        }
+        else if (in_string.equals("MSG ERR\n"))
+        {
+            msg_status = false;
         }
         else
         {
@@ -136,10 +165,13 @@ boolean mailedTo (int id, int[] mailbox_ids)
 
 void serialEvent(Serial arduino)
 {
-    String temp = arduino.readStringUntil('\n');
-    if(temp != null)
+    if (arduino != null)
     {
-        in_string = temp;
+        String temp = arduino.readStringUntil('\n');
+        if(temp != null)
+        {
+            in_string = temp;
+        }
     }
 }
 
@@ -239,21 +271,35 @@ void renderGraphics()
     
     //Rendering CAN Status Inicator
     fill(white);
-    int[] CAN_offset = {displayWidth - 170, header_height / 2};
-    text("CAN Status:", CAN_offset[0], CAN_offset[1]);
-    String message;
+    text("CAN Status:", can_status_pos[0], can_status_pos[1]);
+    text("MSG Status:", msg_status_pos[0], msg_status_pos[1]);
+    
     if(bus_status)
     {
         fill(green);
-        message = "OK";
+        can_status_message = "OK";
     }
     else
     {
         fill(red);
         textFont(bold, 16);
-        message = "ERROR";
+        can_status_message = "ERROR";
     }
-    text(message, CAN_offset[0] + 95, CAN_offset[1]);
+    
+    text(can_status_message, can_status_pos[0] + 95, can_status_pos[1]);
+    
+    if (msg_status)
+    {
+        fill(green);
+        msg_status_message = "SENT";
+    }
+    else
+    {
+        fill(grey);
+        msg_status_message = "NA/ERR";
+    }
+    
+    text(msg_status_message, msg_status_pos[0] + 95, msg_status_pos[1]);
     resetFormat();
     
     // Send message button
@@ -268,12 +314,11 @@ void renderGraphics()
     
     rect(displayWidth - 170, header_height - 50, 120, 40, 8);
     fill(black);
-    text("SEND MSSG", displayWidth - 155, header_height - 25);
+    text("SEND MSG", displayWidth - 155, header_height - 25);
     
     // Subsystems and columns
-    int left_justify = 15;
+    
     text("SUBSYSTEMS", left_justify, header_height + 30);
-    int initial_spacing = 200;
     
     //Dynamically Adjusts the widths of columns
     for(int i = 0; i < fields.length; i++)
@@ -324,7 +369,9 @@ void mouseClicked()
     {
         String out_id = JOptionPane.showInputDialog("Enter the mailbox ID: ");
         String out_data = JOptionPane.showInputDialog("Enter the message (Hex format: 00/00/00/00/00/00/00/00): ");
-        String message = "^" + out_id + "/" + out_data;
+        String message = "^" + out_id + "/" + out_data + "/\n";
+        
+        arduino.write(message);
     }
 }
 
