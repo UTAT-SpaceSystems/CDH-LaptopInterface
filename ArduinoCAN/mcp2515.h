@@ -2,7 +2,7 @@
 MCP2515.h - Library for Microchip MCP2515 CAN Controller
 
 ----------------------------------
-UTAT Space Systems CANBus Reader
+UTAT Space Systems CANBus Analyzer
 ----------------------------------
 
 For use with the Sparkfun CANBus shield.

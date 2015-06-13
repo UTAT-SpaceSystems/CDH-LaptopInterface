@@ -1,6 +1,6 @@
 /*
 ----------------------------------
-UTAT Space Systems CANBus Reader
+UTAT Space Systems CANBus Analyzer
 ----------------------------------
 
 For use with the Sparkfun CANBus shield.
@@ -20,7 +20,7 @@ Modified: 5/31/2015
 
 byte i = 0;
 // String for sending messages on bus
-Frame message_out
+Frame message_out;
 // CAN message receive frames 
 Frame message_in_0, message_in_1;
 // Create CAN object with pins as defined
@@ -113,41 +113,38 @@ void loop()
     // Print Messages
     if(message_in_0.id>0) 
     {
-        printCANMessage(message_in_0, 10);
+        parseCANMessage(message_in_0, 10);
     }    
     if(message_in_1.id>0) 
     {
-        printCANMessage(message_in_1, 10);
+        parseCANMessage(message_in_1, 10);
     }
     
     
     if (Serial.available())
     {
-        String temp = Serial.read();
-        if(temp[0] == '^')
+        String serial_message = Serial.readString();
+        if(serial_message[0] == '^')
         {
-            message_out = parseMessageFromSerial(temp);
+            message_out = parseMessageFromSerial(serial_message);
             sendCANMessage(message_out);
         }
     }
 }
 
 
-
 Frame parseMessageFromSerial(String in)
 {
     Frame f;
-    f.dlc = 8;
-    
-    String[] raw = split(in.substring(1, in.length() - 3), "/");
-    
-    f.id = unhex(raw[0]);
+    f.dlc = 8; 
+    // First byte
+    f.id = in.substring(1, 3);  
     
     for(int i = 0; i < f.dlc; i++ )
     {
-        f.data[i] = unhex(raw[i + 1]);
+      f.data[i] = in.substring(3 + (2 * i), 5 + (2 * i));
     }
-    return values;
+    return f;
 }
 
 void sendCANMessage(Frame message)
@@ -163,33 +160,62 @@ void sendCANMessage(Frame message)
 * Frame message - CAN frame received to print.
 * unsigned long filter - CAN ID to filter messages by; a value of 0 indicates no filtering.
 */
-void printCANMessage(Frame message, unsigned long filter)
+void parseCANMessage(Frame message, unsigned long filter)
 { 
+    String data = "";
+    
     if (filter != 0)
     {
         if (message.id == filter)
-        {
-            Serial.print("$");
-            Serial.print(message.id, HEX);
-            Serial.print("/");
-            for(i = 0; i < message.dlc; i++) 
-            {
-                Serial.print(message.data[i],HEX);
-                Serial.print("/");
-            }
-            Serial.println();
-        }
+        { 
+             Serial.print("$");
+             print_hex(message.id, 8);
+             Serial.print("/");
+             for(i = 0; i < message.dlc; i++) 
+             {
+                 print_hex(message.data[i], 8);
+                 Serial.print("/");
+                 //data += String(message.data[i]);
+             }
+             Serial.println();  
+         }
     }
     else
     {
         Serial.print("$");
-        Serial.print(message.id, HEX);
-        Serial.print("/");
-        for(i = 0; i < message.dlc; i++) 
-        {
-            Serial.print(message.data[i],HEX);
-            Serial.print("/");
-        }
-        Serial.println();  
+             print_hex(message.id, 8);
+             Serial.print("/");
+             for(i = 0; i < message.dlc; i++) 
+             {
+                 print_hex(message.data[i], 8);
+                 Serial.print("/");
+                 //data += String(message.data[i]);
+             }
+             Serial.println();
     }
 }
+
+void print_hex(int v, int num_places)
+{
+    int mask=0, n, num_nibbles, digit;
+
+    for (n=1; n<=num_places; n++)
+    {
+        mask = (mask << 1) | 0x0001;
+    }
+    v = v & mask; // truncate v to specified number of places
+
+    num_nibbles = num_places / 4;
+    if ((num_places % 4) != 0)
+    {
+        ++num_nibbles;
+    }
+
+    do
+    {
+        digit = ((v >> (num_nibbles-1) * 4)) & 0x0f;
+        Serial.print(digit, HEX);
+    } while(--num_nibbles);
+
+}
+
