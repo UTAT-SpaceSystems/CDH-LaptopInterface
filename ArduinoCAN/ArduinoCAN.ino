@@ -4,10 +4,14 @@ UTAT Space Systems CANBus Analyzer
 ----------------------------------
 
 For use with the Sparkfun CANBus shield.
-
 Initial Author: David Harding
 Created: 11/08/2010
+
 Modified: 5/31/2015
+
+DEVELOPMENT HISTORY:
+Date          Author              Release          Description of Change
+06/14/15      Omar Abdeldayem     1.0              Monitoring (send, receive & log) fully functional 
 
 */
 
@@ -31,8 +35,6 @@ void setup()
 {
     Serial.begin(9600);
     
-    //Serial.println("Initializing ...");
-    
     // Set up SPI Communication
     // dataMode can be SPI_MODE0 or SPI_MODE3 only for MCP2515
     SPI.setClockDivider(SPI_CLOCK_DIV2);
@@ -46,16 +48,11 @@ void setup()
     if(baudRate>0) 
     {
         Serial.print("READY\n");
-        
-        //Serial.print("Baud Rate (kbps): ");
-        //Serial.println(baudRate,DEC);
     } 
     else 
     {
         Serial.print("ERROR\n");
     }
-    
-    //Serial.println("Ready ...");
 }
 
 void loop() 
@@ -82,7 +79,7 @@ void loop()
         }
         if(interruptFlags & TX0IF) 
         {
-            Serial.print("MSG SENT");
+            Serial.print("MSG SENT\n");
             // TX buffer 0 sent
         }
         if(interruptFlags & TX1IF) 
@@ -113,40 +110,60 @@ void loop()
     // Print Messages
     if(message_in_0.id>0) 
     {
-        parseCANMessage(message_in_0, 10);
+        parseCANMessage(message_in_0);
     }    
     if(message_in_1.id>0) 
     {
-        parseCANMessage(message_in_1, 10);
+        parseCANMessage(message_in_1);
     }
     
-    
+    // Checks to see whether the GUI has written anything to serial
+    // to send back out on the bus
     if (Serial.available())
     {
         String serial_message = Serial.readString();
         if(serial_message[0] == '^')
         {
             message_out = parseMessageFromSerial(serial_message);
-            sendCANMessage(message_out);
+            
+            if (message_out.dlc != 0)
+            {
+                sendCANMessage(message_out);
+            }
         }
     }
 }
 
-
+/**
+* Parses a message sent over serial from the GUI into a CAN frame
+* String in - String sent over serial from Processing in the following
+* format: ^XX/00FF00FF00FF00FF
+* where XX represents the ID and everything after the slash represents 
+* the 8 data bytes.
+*/
 Frame parseMessageFromSerial(String in)
-{
+{  
     Frame f;
-    f.dlc = 8; 
-    // First byte
-    f.id = in.substring(1, 3);  
-    
-    for(int i = 0; i < f.dlc; i++ )
+    f.dlc = 0;
+    if (in.length() != 0)
     {
-      f.data[i] = in.substring(3 + (2 * i), 5 + (2 * i));
+        f.dlc = 8; 
+        // First byte
+        f.id = in.substring(1, 3).toInt();  
+        
+        for(int i = 0; i < f.dlc; i++ )
+        {
+          f.data[i] = in.substring(3 + (2 * i), 5 + (2 * i)).toInt();
+        }
     }
     return f;
 }
 
+/**
+* Loads a CAN frame into one of the tranceiver's two transmit buffers
+* and sends it over CAN.
+* Frame message - CAN frame being sent out over the bus
+*/
 void sendCANMessage(Frame message)
 {
   CAN.LoadBuffer(TXB0, message);
@@ -160,41 +177,27 @@ void sendCANMessage(Frame message)
 * Frame message - CAN frame received to print.
 * unsigned long filter - CAN ID to filter messages by; a value of 0 indicates no filtering.
 */
-void parseCANMessage(Frame message, unsigned long filter)
+void parseCANMessage(Frame message)
 { 
     String data = "";
     
-    if (filter != 0)
-    {
-        if (message.id == filter)
-        { 
-             Serial.print("$");
-             print_hex(message.id, 8);
-             Serial.print("/");
-             for(i = 0; i < message.dlc; i++) 
-             {
-                 print_hex(message.data[i], 8);
-                 Serial.print("/");
-                 //data += String(message.data[i]);
-             }
-             Serial.println();  
-         }
-    }
-    else
-    {
-        Serial.print("$");
-             print_hex(message.id, 8);
-             Serial.print("/");
-             for(i = 0; i < message.dlc; i++) 
-             {
-                 print_hex(message.data[i], 8);
-                 Serial.print("/");
-                 //data += String(message.data[i]);
-             }
-             Serial.println();
-    }
+   Serial.print("$");
+   print_hex(message.id, 8);
+   Serial.print("/");
+   for(i = 0; i < message.dlc; i++) 
+   {
+       print_hex(message.data[i], 8);
+       Serial.print("/");
+   }
+   Serial.println();  
+          
 }
 
+/**
+* Prints an int in hexadecimal WITH leading (insignificant) zeros
+* v - integer to print
+* num_places - number of bits
+*/
 void print_hex(int v, int num_places)
 {
     int mask=0, n, num_nibbles, digit;
