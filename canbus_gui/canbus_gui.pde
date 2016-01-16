@@ -97,13 +97,13 @@ void setup()
     // Setup the com port
     if(Serial.list().length==0)
     {
-        JOptionPane.showInputDialog("No COM device connected, exiting!");
-        exit();
+        JOptionPane.showMessageDialog(null,"No COM deviece connectd, existing.","UTAT",JOptionPane.ERROR_MESSAGE);
+        System.exit(0);
     }
     port_selection = (String) JOptionPane.showInputDialog(null,"Choose COM port:","UTAT",JOptionPane.QUESTION_MESSAGE,null,Serial.list(),Serial.list()[0]);
     if(port_selection==null)
     {
-        exit();    
+        System.exit(0);    
     }
 
     size(displayWidth, displayHeight);  
