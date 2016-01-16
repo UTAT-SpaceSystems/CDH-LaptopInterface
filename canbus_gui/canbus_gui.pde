@@ -95,8 +95,17 @@ void settings()
 void setup()
 {   
     // Setup the com port
+    if(Serial.list().length==0)
+    {
+        JOptionPane.showInputDialog("No COM device connected, exiting!");
+        exit();
+    }
     port_selection = (String) JOptionPane.showInputDialog(null,"Choose COM port:","UTAT",JOptionPane.QUESTION_MESSAGE,null,Serial.list(),Serial.list()[0]);
-  
+    if(port_selection==null)
+    {
+        exit();    
+    }
+
     size(displayWidth, displayHeight);  
   
     //Loading assets
@@ -161,7 +170,7 @@ void draw()
     
     // Check to see if there are messages on the bus 
     serial_event(arduino);
-    
+
     // ^ case is to ignore echo when the PC sends a message
     // # is a blank default until messages start coming in
     if (!in_string.equals("#\n") && !(in_string.charAt(0) == '^'))
@@ -221,7 +230,6 @@ void draw()
                 float data = (float) Long.parseLong(frame[1], 16);
                 
                 cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
-                //println(data - SENSOR_OFFSET);
             }
             /********************** COMS *********************/
             else if (mailed_to(frame[0], coms.mailbox_ids))
@@ -332,7 +340,7 @@ String[] parse_data(String str)
     String message = "";
     
     values[0] = raw[0];
-    
+
     // Reverse the order of the bytes
     for(int i = raw.length - 5; i >= 1; i--)
     {
@@ -340,7 +348,7 @@ String[] parse_data(String str)
     }
     
     values[1] = message;
-    
+
     return values;
 }
 
