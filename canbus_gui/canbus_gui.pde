@@ -6,16 +6,23 @@
 *   Date          Author              Release          Description of Change
 *   06/14/15      Omar Abdeldayem     1.0              Monitoring (send, receive & log) fully functional 
 *                 Albert Xie
+*
+*   01/12/16      Steven Yin          1.1              Compatible with Processing 3.0.1, Added COM selector, Prevent overwriting log file
 */
 
 // Imports
+import java.util.Date;
+import java.text.*;
 import javax.swing.JOptionPane;
 import java.util.Queue;
 import java.util.LinkedList;
 import processing.serial.*;
 
-// Set GUI fullscreen
-boolean sketchFullScreen() { return true; }
+// COM port result
+String port_selection;
+
+// If Serial was started
+boolean is_started = false;
 
 // Data Logging
 PrintWriter log;
@@ -76,13 +83,31 @@ String filter;
 
 Serial arduino;
 
+// Set GUI fullscreen 
+void settings()
+{
+     fullScreen();
+}
+
 /*
 * Setup Fucntion
 */
 void setup()
-{
-    size(displayWidth, displayHeight);
-    
+{   
+    // Setup the com port
+    if(Serial.list().length==0)
+    {
+        JOptionPane.showMessageDialog(null,"No COM deviece connectd, existing.","UTAT",JOptionPane.ERROR_MESSAGE);
+        System.exit(0);
+    }
+    port_selection = (String) JOptionPane.showInputDialog(null,"Choose COM port:","UTAT",JOptionPane.QUESTION_MESSAGE,null,Serial.list(),Serial.list()[0]);
+    if(port_selection==null)
+    {
+        System.exit(0);    
+    }
+
+    size(displayWidth, displayHeight);  
+  
     //Loading assets
     mono = loadFont("FreeSans-48.vlw");
     bold = loadFont("FreeSansBold-48.vlw");
@@ -108,14 +133,12 @@ void setup()
     filter = "00";
     in_string = "#\n";
     
-    // Select the Arduino COM port, assumes only one Arduino plugged in
-    if (Serial.list().length > 0)
-    {
-        arduino = new Serial(this, Serial.list()[0], baud_rate);
-    }
-    
+    // Read current time info
+    Date d = new Date();
+    SimpleDateFormat date = new SimpleDateFormat("yyyyMMddhhmmss");
+    String log_name = date.format(d);
     // Create the log file and dispose handler to clean up on exit
-    log = createWriter("log.txt");
+    log = createWriter("log"+ log_name +".txt");
     dh = new DisposeHandler(this);
     
     // Stream data structs
@@ -130,14 +153,24 @@ void draw()
 {
     //Defaults
     smooth();
+    
     background(black);
-    frame.setTitle("CAN Bus");
+    surface.setTitle("CAN Bus"); // surface.setTitle for Processing 3
     
     render_graphics();
     
+    // If the Serial was started
+    if(!is_started)
+    {
+        // Start the Serial
+        arduino = new Serial(this, port_selection, baud_rate);
+        // Since this is a one time setup, we state that we now have set up the connection.
+        is_started = true;
+    }
+    
     // Check to see if there are messages on the bus 
     serial_event(arduino);
-    
+
     // ^ case is to ignore echo when the PC sends a message
     // # is a blank default until messages start coming in
     if (!in_string.equals("#\n") && !(in_string.charAt(0) == '^'))
@@ -197,7 +230,6 @@ void draw()
                 float data = (float) Long.parseLong(frame[1], 16);
                 
                 cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
-                //println(data - SENSOR_OFFSET);
             }
             /********************** COMS *********************/
             else if (mailed_to(frame[0], coms.mailbox_ids))
@@ -250,7 +282,7 @@ float convert_to_temp(float temp)
 {
     float r_ratio, log_result = 0.0, result = 0.0;
     
-    int i, flag = 0;
+    int i;
     
     r_ratio = temp / 1023;  // Convert ADC value to the ratio (of resistances).
     
@@ -308,7 +340,7 @@ String[] parse_data(String str)
     String message = "";
     
     values[0] = raw[0];
-    
+
     // Reverse the order of the bytes
     for(int i = raw.length - 5; i >= 1; i--)
     {
@@ -316,7 +348,7 @@ String[] parse_data(String str)
     }
     
     values[1] = message;
-    
+
     return values;
 }
 
@@ -632,4 +664,3 @@ public class DisposeHandler
         log.close(); // Finishes the file
     }
 }
-
