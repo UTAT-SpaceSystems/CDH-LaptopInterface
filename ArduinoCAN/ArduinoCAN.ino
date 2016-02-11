@@ -10,17 +10,21 @@ Created: 11/08/2010
 Modified: 5/31/2015
 
 DEVELOPMENT HISTORY:
-Date          Author              Release          Description of Change
-06/14/15      Omar Abdeldayem     1.0              Monitoring (send, receive & log) fully functional 
+Date          Author              Description of Change
+06/14/15      Omar Abdeldayem     Monitoring (send, receive & log) fully functional 
 
 */
 
-#include "SPI.h" // Arduino SPI Library
+#include <SPI.h> // Arduino SPI Library
 #include "MCP2515.h"
+#include "arduino_defs.h"
 
 // Pin definitions specific to how the MCP2515 is wired up.
 #define CS_PIN    10
 #define INT_PIN    2
+
+// Pin definition of OBC and SSM reset !!!NEED TO BE CHANGED!!!
+#define RESET_OBC_SSM_PIN 0
 
 byte i = 0;
 // String for sending messages on bus
@@ -34,7 +38,7 @@ MCP2515 CAN(CS_PIN, INT_PIN);
 void setup() 
 {
     Serial.begin(9600);
-    
+establishContact();
     // Set up SPI Communication
     // dataMode can be SPI_MODE0 or SPI_MODE3 only for MCP2515
     SPI.setClockDivider(SPI_CLOCK_DIV2);
@@ -43,7 +47,7 @@ void setup()
     SPI.begin();   
     // Initialise MCP2515 CAN controller at the specified speed and clock frequency
     // CAN bus running at 250kbs at 16MHz
-    int baudRate=CAN.Init(250,16);
+    int baudRate=5;//CAN.Init(250,16);
     
     if(baudRate>0) 
     {
@@ -121,7 +125,7 @@ void loop()
     // to send back out on the bus
     if (Serial.available())
     {
-        String serial_message = Serial.readString();
+        String serial_message = Serial.readStringUntil('\n');
         if(serial_message[0] == '^')
         {
             message_out = parseMessageFromSerial(serial_message);
@@ -130,6 +134,10 @@ void loop()
             {
                 sendCANMessage(message_out);
             }
+        }
+        else if(serial_message[0] == '~')
+        {
+            handleCommand(serial_message);
         }
     }
 }
@@ -157,6 +165,22 @@ Frame parseMessageFromSerial(String in)
         }
     }
     return f;
+}
+
+/**
+* Handle the commands which requires arduino to handle
+* String in - String sent over serial from Processing in the following
+* format: ~/XX/XX
+* where 
+*/
+void handleCommand(String in)
+{
+//    byte command = strtoul(in.substring(2,4),NULL,16);
+//    byte data = in.substring(5,7).toInt();
+//    if(command & 0x00)
+//      Serial.println("!!!");
+//    //Serial.println(command);
+//    //Serial.println(data);
 }
 
 /**
@@ -219,6 +243,14 @@ void print_hex(int v, int num_places)
         digit = ((v >> (num_nibbles-1) * 4)) & 0x0f;
         Serial.print(digit, HEX);
     } while(--num_nibbles);
-
 }
+
+void establishContact() {
+    delay(100);
+    Serial.println("Clearning buffer!!!");
+    Serial.flush();
+    while (Serial.available() <= 0) 
+    {
+    }
+    }
 

@@ -66,6 +66,9 @@ boolean msg_status = false;
 // Subsystems & properties
 Subsystem adcs, cdh, coms, eps, payl;
 
+// Put all the Subsystems in arraylist therefore easy to loop through
+ArrayList<Subsystem> s_list = new ArrayList<Subsystem>();
+
 final String[] ADCS_IDS = {};
 final String[] CDH_IDS = {"10"};
 final String[] COMS_IDS = {};
@@ -83,6 +86,9 @@ String filter;
 
 Serial arduino;
 
+// Normal interface or plot interface
+boolean isPlot = false;
+
 // Set GUI fullscreen 
 void settings()
 {
@@ -97,18 +103,18 @@ void setup()
     // Setup the com port
     if(Serial.list().length==0)
     {
-        JOptionPane.showMessageDialog(null,"No COM deviece connectd, existing.","UTAT",JOptionPane.ERROR_MESSAGE);
-        System.exit(0);
+       JOptionPane.showMessageDialog(null,"No COM deviece connectd, existing.","UTAT",JOptionPane.ERROR_MESSAGE);
+       System.exit(0);
     }
     port_selection = (String) JOptionPane.showInputDialog(null,"Choose COM port:","UTAT",JOptionPane.QUESTION_MESSAGE,null,Serial.list(),Serial.list()[0]);
     if(port_selection==null)
     {
-        System.exit(0);    
+       System.exit(0);    
     }
 
     size(displayWidth, displayHeight);  
   
-    //Loading assets
+    // Loading assets
     mono = loadFont("FreeSans-48.vlw");
     bold = loadFont("FreeSansBold-48.vlw");
     title = loadFont("FreeSansBoldOblique-48.vlw");
@@ -120,15 +126,19 @@ void setup()
     can_status_pos = new int[]{displayWidth - 170, (HEADER_HEIGHT / 2) - 30};
     msg_status_pos = new int[]{displayWidth - 170, (HEADER_HEIGHT / 2) - 10};
     
-    // Create subsystems
-    adcs = new Subsystem(ADCS_IDS);
-    cdh = new Subsystem(CDH_IDS);
-    coms = new Subsystem(COMS_IDS);
-    eps = new Subsystem(EPS_IDS);
-    payl = new Subsystem(PAYL_IDS);
+    // Delta x for the plot
+    DELTA_X = (displayWidth - 400)/(T_MINUS/(UPDATE_INTERVAL/1000));
+    
+    // Create subsystems with color
+    adcs = new Subsystem(ADCS_IDS, plot_red);
+    cdh = new Subsystem(CDH_IDS, plot_green);
+    coms = new Subsystem(COMS_IDS, plot_blue);
+    eps = new Subsystem(EPS_IDS, plot_yellow);
+    payl = new Subsystem(PAYL_IDS, plot_pink);
     
     // Baud rate must match the Arduino serial baud rate
     baud_rate = 9600;
+    
     // Message filtering default
     filter = "00";
     in_string = "#\n";
@@ -144,6 +154,12 @@ void setup()
     // Stream data structs
     bus_stream = new LinkedList();
     outgoing_message_stream = new LinkedList();
+    
+    // Initialize subsystem arraylist
+    array_list_init();
+    
+    // Initialize the linked list
+    linked_list_init();
 }
 
 /*
@@ -157,17 +173,28 @@ void draw()
     background(black);
     surface.setTitle("CAN Bus"); // surface.setTitle for Processing 3
     
-    render_graphics();
+    // Update plot data in the background
+    update_plot_data();
+    
+    // Determines which mode to go into
+    if(isPlot)
+    {
+        render_plot();
+    }
+    else
+    {
+        render_graphics();
+    }
     
     // If the Serial was started
     if(!is_started)
     {
-        // Start the Serial
-        arduino = new Serial(this, port_selection, baud_rate);
-        // Since this is a one time setup, we state that we now have set up the connection.
-        is_started = true;
+       // Start the Serial
+       arduino = new Serial(this, port_selection, baud_rate);
+       // Since this is a one time setup, we state that we now have set up the connection.
+       is_started = true;
     }
-    
+    establishContact();
     // Check to see if there are messages on the bus 
     serial_event(arduino);
 
@@ -216,31 +243,35 @@ void draw()
             }
             
             /********************** ADCS *********************/
-            if (mailed_to(frame[0], adcs.mailbox_ids))
+            if (mailed_to(frame[0], s_list.get(0).mailbox_ids))
             {
             }
             /********************** CDH **********************/
-            else if (mailed_to(frame[0], cdh.mailbox_ids))
+            else if (mailed_to(frame[0], s_list.get(1).mailbox_ids))
             {
                 if (!cdh.temp_avail)
                 {
                     cdh.temp_avail = true;
                 }
                 
-                float data = (float) Long.parseLong(frame[1], 16);
+                //float data = (float) Long.parseLong(frame[1], 16);
                 
-                cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
+                //cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
+                //System.out.println(frame[1]);
+                //System.out.println((float)Long.parseLong(frame[1],16));
+                s_list.get(1).is_updated[0] = true;
+                s_list.get(1).my_data[0] = (float)Long.parseLong(frame[1],16);
             }
             /********************** COMS *********************/
-            else if (mailed_to(frame[0], coms.mailbox_ids))
+            else if (mailed_to(frame[0], s_list.get(2).mailbox_ids))
             {
             }
             /********************** EPS **********************/
-            else if (mailed_to(frame[0], eps.mailbox_ids))
+            else if (mailed_to(frame[0], s_list.get(3).mailbox_ids))
             {
             }
             /********************** PAYL *********************/
-            else if (mailed_to(frame[0], payl.mailbox_ids))
+            else if (mailed_to(frame[0], s_list.get(4).mailbox_ids))
             {
             }
         }
@@ -323,6 +354,7 @@ void serial_event(Serial arduino)
         if(temporary != null)
         {
             in_string = temporary;
+            System.out.println(in_string);
         }
     }
 }
@@ -491,6 +523,21 @@ void render_graphics()
     rect(displayWidth - 170, HEADER_HEIGHT - 50, 120, 40, 8);
     fill(black);
     text("SEND MSG", displayWidth - 155, HEADER_HEIGHT - 25);
+    
+    resetFormat();
+    
+    // PLOT_DATA button
+    if (mouseX > displayWidth - 320 && mouseX < displayWidth - 200 && mouseY > HEADER_HEIGHT - 105 && mouseY < HEADER_HEIGHT - 65)
+    {
+        fill(white);
+    }
+    else
+    {
+        fill(grey);
+    }
+    rect(displayWidth - 320, HEADER_HEIGHT - 105, 120, 40, 8);
+    fill(black);
+    text("PLOT DATA", displayWidth - 305, HEADER_HEIGHT - 80);
         
     // Subsystems and columns
     resetFormat();
@@ -521,19 +568,19 @@ void render_graphics()
         switch(i)
         {
             case 0:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), adcs);
+            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(0));
             break;
             case 1:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), cdh);
+            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(1));
             break;
             case 2:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), coms);
+            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(2));
             break;
             case 3:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), eps);
+            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(3));
             break;
             case 4:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), payl);
+            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(4));
             break;
         }
         
@@ -571,37 +618,81 @@ void render_graphics()
 
 void mouseClicked()
 {
-    if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT - 50 && mouseY < HEADER_HEIGHT - 10)
+    if(!isPlot)
     {
-        String out_id = JOptionPane.showInputDialog("Enter the mailbox ID: ");
-        String out_data = JOptionPane.showInputDialog("Enter an 8-byte hexadecimal message (format: FFFFFFFFFFFFFFFF): ");
-        
-        // Hat indicates message coming from PC unlike $ for messages being read from bus
-        // Nothing is sent by the arduino until it reads a message started by ^
-        String message = "";
-        
-        if (out_id != null && out_data != null)
+        if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT - 50 && mouseY < HEADER_HEIGHT - 10)
         {
-            message = "^" + out_id + out_data + "\n";
+            String out_id = JOptionPane.showInputDialog("Enter the mailbox ID: ");
+            String out_data = JOptionPane.showInputDialog("Enter an 8-byte hexadecimal message (format: FFFFFFFFFFFFFFFF): ");
+            
+            // Hat indicates message coming from PC unlike $ for messages being read from bus
+            // Nothing is sent by the arduino until it reads a message started by ^
+            String message = "";
+            
+            if (out_id != null && out_data != null)
+            {
+                message = "^" + out_id + out_data + "\n";
+            }
+            
+            if (outgoing_message_stream.size() < 14)
+            {
+                outgoing_message_stream.add("ID: " + out_id + "        DATA: " + out_data);
+            }
+            else
+            {
+                outgoing_message_stream.remove();
+                outgoing_message_stream.add("ID: " +  out_id + "        DATA: " + out_data);
+            }
+            
+            arduino.write(message);
         }
-        
-        if (outgoing_message_stream.size() < 14)
+        else if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > 380 && mouseY < 410)
         {
-            outgoing_message_stream.add("ID: " + out_id + "        DATA: " + out_data);
+            filter = JOptionPane.showInputDialog("Enter the ID you wish to filter by:");
         }
-        else
+        else if (mouseX > displayWidth - 320 && mouseX < displayWidth - 200 && mouseY > HEADER_HEIGHT - 105 && mouseY < HEADER_HEIGHT - 65)
         {
-            outgoing_message_stream.remove();
-            outgoing_message_stream.add("ID: " +  out_id + "        DATA: " + out_data);
+             isPlot = true;
         }
-        
-        arduino.write(message);
     }
-    else if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > 380 && mouseY < 410)
+    else
     {
-        filter = JOptionPane.showInputDialog("Enter the ID you wish to filter by:");
+        // Back button
+        if (mouseX > displayWidth - 320 && mouseX < displayWidth - 200 && mouseY > HEADER_HEIGHT - 105 && mouseY < HEADER_HEIGHT - 65)
+        {
+            isPlot = false;
+        }
+        // Tempreturn button
+        else if (mouseX > 20 && mouseX < 140 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
+        {
+            my_plot=plot_type.tempreture;
+        }
+        // Voltage button
+        else if (mouseX > 160 && mouseX < 280 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
+        {
+            my_plot=plot_type.voltage;
+        }
+        // Current button
+        else if (mouseX > 300 && mouseX < 420 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
+        {
+            my_plot=plot_type.current;
+        }
+        // Battery button
+        else if (mouseX > 440 && mouseX < 560 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
+        {
+            my_plot=plot_type.battery;
+        }
+        // Pressure button
+        else if (mouseX > 580 && mouseX < 700 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
+        {
+            my_plot=plot_type.pressure;
+        }
+        // Humidity button
+        else if (mouseX > 720 && mouseX < 840 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
+        {
+            my_plot=plot_type.humidity;
+        }
     }
-    
 }
 
 /**
@@ -627,6 +718,7 @@ void display_stream(Queue q, int x_pos)
 void resetFormat()
 {
     fill(white);
+    stroke(black);
     textFont(mono, 16);
 }
 
@@ -643,11 +735,36 @@ class Subsystem
     
     float temp, volt, curr, humid, batt, pres;
     
-    Subsystem (String[] mb_ids)
+    // LinkedList that saves all data in the past x data points
+    LinkedList<Float>[] my_data_list = new LinkedList[fields.length];
+    
+    // Data update status updated if true
+    boolean is_updated[] = new boolean[fields.length];
+
+    // Data buffer saves updated data
+    float my_data[] = new float[fields.length];
+    
+    // The plot colour for this subsystem
+    color plot_color;
+    
+    Subsystem (String[] mb_ids, color c)
     {
         mailbox_ids = mb_ids;
+        plot_color = c;
     }
     
+}
+
+/*
+* Put all the subsystems into one array list so it will be easier to loop through
+*/
+void array_list_init()
+{
+    s_list.add(adcs);
+    s_list.add(cdh);
+    s_list.add(coms);
+    s_list.add(eps);
+    s_list.add(payl);
 }
 
 public class DisposeHandler
@@ -663,4 +780,20 @@ public class DisposeHandler
         log.flush(); // Writes the remain
         log.close(); // Finishes the file
     }
+}
+boolean firstContact = false;
+void establishContact()
+{
+  if(firstContact == false)
+  {
+    while(arduino.available()>0)
+    {
+  String inByte = arduino.readString();
+  System.out.println(inByte);
+     arduino.clear();          // clear the serial port buffer
+     firstContact = true;     // you've had first contact from the microcontroller
+     arduino.write('A');       // ask for more
+     return;
+  }
+  }
 }
