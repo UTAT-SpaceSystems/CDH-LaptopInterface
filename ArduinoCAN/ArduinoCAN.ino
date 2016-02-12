@@ -7,24 +7,19 @@ For use with the Sparkfun CANBus shield.
 Initial Author: David Harding
 Created: 11/08/2010
 
-Modified: 5/31/2015
-
 DEVELOPMENT HISTORY:
 Date          Author              Description of Change
-06/14/15      Omar Abdeldayem     Monitoring (send, receive & log) fully functional 
+06/14/15      Omar Abdeldayem     Monitoring (send, receive & log) fully functional
+
+02/12/16      Steven Yin          Added pin to reset OBC and SSMs
 
 */
 
 #include <SPI.h> // Arduino SPI Library
 #include "MCP2515.h"
 #include "arduino_defs.h"
+#include "SimpleTimer.h"
 
-// Pin definitions specific to how the MCP2515 is wired up.
-#define CS_PIN    10
-#define INT_PIN    2
-
-// Pin definition of OBC and SSM reset !!!NEED TO BE CHANGED!!!
-#define RESET_OBC_SSM_PIN 0
 
 byte i = 0;
 // String for sending messages on bus
@@ -34,11 +29,15 @@ Frame message_in_0, message_in_1;
 // Create CAN object with pins as defined
 MCP2515 CAN(CS_PIN, INT_PIN);
 
+// the timer object
+SimpleTimer timer;
 
 void setup() 
 {
+    timer.setInterval(REQUEST_SENSOR_DATA_INTERVAL, request_sensor_data);
+    
     Serial.begin(9600);
-establishContact();
+    establishContact();
     // Set up SPI Communication
     // dataMode can be SPI_MODE0 or SPI_MODE3 only for MCP2515
     SPI.setClockDivider(SPI_CLOCK_DIV2);
@@ -47,7 +46,7 @@ establishContact();
     SPI.begin();   
     // Initialise MCP2515 CAN controller at the specified speed and clock frequency
     // CAN bus running at 250kbs at 16MHz
-    int baudRate=5;//CAN.Init(250,16);
+    int baudRate = CAN.Init(250,16);
     
     if(baudRate>0) 
     {
@@ -120,11 +119,14 @@ void loop()
     {
         parseCANMessage(message_in_1);
     }
-    
+    test();
     // Checks to see whether the GUI has written anything to serial
     // to send back out on the bus
     if (Serial.available())
     {
+        // Send sensor data request
+        timer.run();
+        
         String serial_message = Serial.readStringUntil('\n');
         if(serial_message[0] == '^')
         {
@@ -171,16 +173,16 @@ Frame parseMessageFromSerial(String in)
 * Handle the commands which requires arduino to handle
 * String in - String sent over serial from Processing in the following
 * format: ~/XX/XX
-* where 
+* where 'X' is a HEX
 */
 void handleCommand(String in)
 {
-//    byte command = strtoul(in.substring(2,4),NULL,16);
-//    byte data = in.substring(5,7).toInt();
-//    if(command & 0x00)
-//      Serial.println("!!!");
-//    //Serial.println(command);
-//    //Serial.println(data);
+    byte command = in.substring(2,4).toInt();
+    byte data = in.substring(5,7).toInt();
+    
+    switch(command)
+    {
+    }
 }
 
 /**
@@ -245,12 +247,40 @@ void print_hex(int v, int num_places)
     } while(--num_nibbles);
 }
 
-void establishContact() {
+/**
+* Interact with processing code to clear all output buffer
+*/
+void establishContact() 
+{
     delay(100);
     Serial.println("Clearning buffer!!!");
     Serial.flush();
     while (Serial.available() <= 0) 
     {
     }
+}
+
+/**
+* Request sensor data
+*/
+void request_sensor_data()
+{
+    //Frame buff;
+    //buff.id = 
+    //sendCANMessage(buff);
+
+}
+
+void test()
+{
+    if (Serial.available()<=0) 
+    {
+        int input_number = random(10, 99);
+        int ones = (input_number%10);
+        int tens = ((input_number/10)%10);
+        Serial.println("$A/"+String(ones)+"/"+String(tens)+"/F/A/9/B/F/1/6/5/4/6/6/5/3/F");
+        delay(1000);
     }
+}
+
 

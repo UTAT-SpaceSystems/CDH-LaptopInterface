@@ -24,6 +24,9 @@ String port_selection;
 // If Serial was started
 boolean is_started = false;
 
+// Save the status for the handshake
+boolean firstContact = false;
+
 // Data Logging
 PrintWriter log;
 DisposeHandler dh;
@@ -194,7 +197,9 @@ void draw()
        // Since this is a one time setup, we state that we now have set up the connection.
        is_started = true;
     }
+    
     establishContact();
+    
     // Check to see if there are messages on the bus 
     serial_event(arduino);
 
@@ -354,7 +359,6 @@ void serial_event(Serial arduino)
         if(temporary != null)
         {
             in_string = temporary;
-            System.out.println(in_string);
         }
     }
 }
@@ -781,19 +785,23 @@ public class DisposeHandler
         log.close(); // Finishes the file
     }
 }
-boolean firstContact = false;
+
+/*
+* Handshake with arduino clear input buffer and get ready for input
+*/
 void establishContact()
 {
   if(firstContact == false)
   {
+    delay(200);
     while(arduino.available()>0)
     {
-  String inByte = arduino.readString();
-  System.out.println(inByte);
-     arduino.clear();          // clear the serial port buffer
-     firstContact = true;     // you've had first contact from the microcontroller
-     arduino.write('A');       // ask for more
-     return;
-  }
+        String inByte = arduino.readString();
+        System.out.println(inByte);
+        arduino.clear();          // clear the serial port buffer
+        firstContact = true;
+        arduino.write('A');
+        return;
+    }
   }
 }

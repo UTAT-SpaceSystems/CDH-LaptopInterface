@@ -3,7 +3,8 @@
 * PURPOSE: Components that helps to plot data coming from CAN bus
 
 * DEVELOPMENT HISTORY:
-*   Date          Author              Release          Description of Change
+*   Date          Author              Description of Change
+*   2/12/16       Steven Yin          Added functions to plot data
 *
 */
 

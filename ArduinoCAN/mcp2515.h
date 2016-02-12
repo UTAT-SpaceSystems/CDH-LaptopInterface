@@ -9,7 +9,6 @@ For use with the Sparkfun CANBus shield.
 
 Initial Author: David Harding
 Created: 11/08/2010
-Modified: 5/31/2015
 
 */
 
