@@ -8,40 +8,7 @@
 *
 */
 
-// Updating inteval in milliseconds
-final int UPDATE_INTERVAL = 5000;
 
-// T minus(the time period showed on the plot) in seconds
-final int T_MINUS = 300;
-
-// Setting the delta x for the scaling
-int DELTA_X;
-
-// Grid x
-final int GRID_X = 10;
-
-// Grid y
-final int GRID_Y = 10;
-
-// The types for the selection of which to plot
-public enum plot_type
-{
-    tempreture,
-    voltage,
-    current,
-    battery,
-    pressure,
-    humidity;
-}
-
-final color plot_red = color(255, 0, 0);
-final color plot_green = color(0, 255, 0);
-final color plot_blue = color(0, 0, 255);
-final color plot_yellow = color(255, 255, 0);
-final color plot_pink = color(255, 0, 255);
-
-// Plot nothing by default
-plot_type my_plot = plot_type.tempreture;
 
 void render_plot()
 {

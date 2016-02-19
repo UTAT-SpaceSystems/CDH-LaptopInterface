@@ -13,25 +13,16 @@ Date          Author              Description of Change
 #ifndef arduino_defs_h
 #define arduino_defs_h
 
-/*
- * Software Macros
- */
-
-// The invertal between sensor data request
-#define REQUEST_SENSOR_DATA_INTERVAL 5000
-
-
-/*
- * Hardware Macros
- */
 
 // Pin definitions specific to how the MCP2515 is wired up.
 #define CS_PIN    10
 #define INT_PIN    2
 
-// For the First Byte(Commands)
+// LEDS
+#define LED1      7
+#define LED2      8
 
-
-// For the Second Byte(Data)
+// Commands DEFINE
+#define REQ_SENSOR_DATA   0x00
 
 #endif

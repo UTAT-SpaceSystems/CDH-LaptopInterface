@@ -3,94 +3,18 @@
 * PURPOSE: CAN bus analyzer for UTAT Space System's Heron MK1 CubeSat
 
 * DEVELOPMENT HISTORY:
-*   Date          Author              Release          Description of Change
-*   06/14/15      Omar Abdeldayem     1.0              Monitoring (send, receive & log) fully functional 
+*   Date          Author              Description of Change
+*   06/14/15      Omar Abdeldayem     Monitoring (send, receive & log) fully functional 
 *                 Albert Xie
 *
-*   01/12/16      Steven Yin          1.1              Compatible with Processing 3.0.1, Added COM selector, Prevent overwriting log file
+*   01/12/16      Steven Yin          Compatible with Processing 3.0.1, Added COM selector, Prevent overwriting log file
 */
 
-// Imports
-import java.util.Date;
-import java.text.*;
-import javax.swing.JOptionPane;
-import java.util.Queue;
-import java.util.LinkedList;
-import processing.serial.*;
 
-// COM port result
-String port_selection;
-
-// If Serial was started
-boolean is_started = false;
-
-// Save the status for the handshake
-boolean firstContact = false;
-
-// Data Logging
-PrintWriter log;
-DisposeHandler dh;
-
-// Assets
-PImage crest;
-PFont mono, bold, title;
-
-// GUI Constants
-final int HEADER_HEIGHT = 120;
-final int FOOTER_HEIGHT = 130;
-final int UNDERLINE_HEIGHT = 45;
-final int LEFT_JUSTIFY = 15;
-final int INITIAL_SPACING = 200;
-
-final color white = color(255, 255, 255);
-final color black = color(0, 0, 0);
-final color blue = color(0, 0, 47);
-final color red = color(255, 0, 0);
-final color green = color(58, 255, 41);
-final color grey = color(200, 200, 200);
-final color yellow = color(255, 255, 0);
-
-String[] fields = {"TEMP [C]", "VOLTAGE [V]", "CURRENT [mA]", "BATTERY %", "PRES [KPa]", "HUMIDITY %"};
-String[] rows = { "ADCS", "CDH", "COMS", "EPS", "PAYL"};
-
-int[] column_centers = new int[fields.length];
-int[] can_status_pos = new int[2];
-int[] msg_status_pos = new int[2];
-
-// Data streams for the bus and outgoing messages
-String can_status_message;
-Queue bus_stream;
-boolean bus_status = false;
-
-String msg_status_message;
-Queue outgoing_message_stream;
-boolean msg_status = false;
-
-// Subsystems & properties
-Subsystem adcs, cdh, coms, eps, payl;
-
-// Put all the Subsystems in arraylist therefore easy to loop through
-ArrayList<Subsystem> s_list = new ArrayList<Subsystem>();
-
-final String[] ADCS_IDS = {};
-final String[] CDH_IDS = {"10"};
-final String[] COMS_IDS = {};
-final String[] EPS_IDS = {};
-final String[] PAYL_IDS = {};
-
-final float SENSOR_OFFSET = 1426063360; // 0x55000000
-
-// Serial Constants
-int baud_rate;
-
-String out_id, out_data;
-String in_string;
-String filter;
-
-Serial arduino;
-
-// Normal interface or plot interface
-boolean isPlot = false;
+void close()
+{
+    arduino.stop();
+}
 
 // Set GUI fullscreen 
 void settings()
@@ -200,6 +124,8 @@ void draw()
     
     establishContact();
     
+    request_sensor_update();
+    
     // Check to see if there are messages on the bus 
     serial_event(arduino);
 
@@ -259,13 +185,13 @@ void draw()
                     cdh.temp_avail = true;
                 }
                 
-                //float data = (float) Long.parseLong(frame[1], 16);
+                float data = (float) Long.parseLong(frame[1], 16);
                 
-                //cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
+                cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
                 //System.out.println(frame[1]);
                 //System.out.println((float)Long.parseLong(frame[1],16));
                 s_list.get(1).is_updated[0] = true;
-                s_list.get(1).my_data[0] = (float)Long.parseLong(frame[1],16);
+                s_list.get(1).my_data[0] = cdh.temp;
             }
             /********************** COMS *********************/
             else if (mailed_to(frame[0], s_list.get(2).mailbox_ids))
@@ -726,39 +652,6 @@ void resetFormat()
     textFont(mono, 16);
 }
 
-class Subsystem
-{
-    String[] mailbox_ids;
-    
-    boolean temp_avail = false,
-    volt_avail = false,
-    curr_avail = false,
-    humid_avail = false,
-    batt_avail = false,
-    pres_avail = false;
-    
-    float temp, volt, curr, humid, batt, pres;
-    
-    // LinkedList that saves all data in the past x data points
-    LinkedList<Float>[] my_data_list = new LinkedList[fields.length];
-    
-    // Data update status updated if true
-    boolean is_updated[] = new boolean[fields.length];
-
-    // Data buffer saves updated data
-    float my_data[] = new float[fields.length];
-    
-    // The plot colour for this subsystem
-    color plot_color;
-    
-    Subsystem (String[] mb_ids, color c)
-    {
-        mailbox_ids = mb_ids;
-        plot_color = c;
-    }
-    
-}
-
 /*
 * Put all the subsystems into one array list so it will be easier to loop through
 */
@@ -771,21 +664,6 @@ void array_list_init()
     s_list.add(payl);
 }
 
-public class DisposeHandler
-{
-    
-    DisposeHandler(PApplet pa)
-    {
-        pa.registerMethod("dispose", this);
-    }
-    
-    public void dispose()
-    {
-        log.flush(); // Writes the remain
-        log.close(); // Finishes the file
-    }
-}
-
 /*
 * Handshake with arduino clear input buffer and get ready for input
 */
@@ -796,12 +674,25 @@ void establishContact()
     delay(200);
     while(arduino.available()>0)
     {
-        String inByte = arduino.readString();
-        System.out.println(inByte);
-        arduino.clear();          // clear the serial port buffer
+        String temp =  arduino.readString();
+        arduino.clear(); // clear the serial port buffer
         firstContact = true;
         arduino.write('A');
         return;
     }
   }
 }
+
+/*
+ * Request for sensor update based on pre-set time
+ */
+ 
+ void request_sensor_update()
+ {
+     long dt = System.currentTimeMillis() - last_date;
+     if(dt >= UPDATE_INTERVAL)
+     {
+         arduino.write("~00"); // Reqest all sensor data
+         last_date = System.currentTimeMillis();
+     }
+ }
