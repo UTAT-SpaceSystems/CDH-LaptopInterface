@@ -1,2 +1,2 @@
 Requirements:
-Processing 3.0.1  - https://processing.org/download/
+Processing 3.0.2  - https://processing.org/download/

@@ -1,3 +1,12 @@
+/*
+* FILE NAME: canbus_gui_defs
+* PURPOSE: Definitions for the laptop interface
+
+* DEVELOPMENT HISTORY:
+*   Date          Author              Description of Change
+*   2/13/16       Steven Yin          File created
+*
+*/
 
 // Imports
 import java.util.Date;
@@ -6,6 +15,10 @@ import javax.swing.JOptionPane;
 import java.util.Queue;
 import java.util.LinkedList;
 import processing.serial.*;
+
+// The time object
+Date time;
+SimpleDateFormat time_f = new SimpleDateFormat("hh"+":"+"mm"+":"+"ss");
 
 // COM port result
 String port_selection;
@@ -46,14 +59,16 @@ int[] column_centers = new int[fields.length];
 int[] can_status_pos = new int[2];
 int[] msg_status_pos = new int[2];
 
-// Data streams for the bus and outgoing messages
-String can_status_message;
-Queue bus_stream;
-boolean bus_status = false;
+// Data streams for arduino, outgoing messages ans can bus
+Queue arduino_stream;
 
 String msg_status_message;
 Queue outgoing_message_stream;
 boolean msg_status = false;
+
+String can_status_message;
+Queue can_stream;
+boolean can_status;
 
 // Subsystems & properties
 Subsystem adcs, cdh, coms, eps, payl;
@@ -61,11 +76,14 @@ Subsystem adcs, cdh, coms, eps, payl;
 // Put all the Subsystems in arraylist therefore easy to loop through
 ArrayList<Subsystem> s_list = new ArrayList<Subsystem>();
 
-final String[] ADCS_IDS = {};
-final String[] CDH_IDS = {"10"};
-final String[] COMS_IDS = {};
-final String[] EPS_IDS = {};
-final String[] PAYL_IDS = {};
+//final String[] ADCS_IDS = {};
+//final String[] CDH_IDS = {"10"};
+//final String[] COMS_IDS = {};
+//final String[] EPS_IDS = {};
+//final String[] PAYL_IDS = {};
+
+// Number of messages shown
+final int MESSAGE_NUM = 25;
 
 final float SENSOR_OFFSET = 1426063360; // 0x55000000
 
@@ -83,7 +101,7 @@ boolean isPlot = false;
 
 class Subsystem
 {
-    String[] mailbox_ids;
+    //String[] mailbox_ids;
     
     boolean temp_avail = false,
     volt_avail = false,
@@ -106,9 +124,9 @@ class Subsystem
     // The plot colour for this subsystem
     color plot_color;
     
-    Subsystem (String[] mb_ids, color c)
+    Subsystem (color c)
     {
-        mailbox_ids = mb_ids;
+        //mailbox_ids = mb_ids;
         plot_color = c;
     }
     
@@ -170,5 +188,38 @@ final color plot_blue = color(0, 0, 255);
 final color plot_yellow = color(255, 255, 0);
 final color plot_pink = color(255, 0, 255);
 
-// Plot nothing by default
+// Plot tempreture by default
 plot_type my_plot = plot_type.tempreture;
+
+/* SENSOR NAMES      */
+final int PANELX_V = 0x01;
+final int PANELX_I = 0x02;
+final int PANELY_V = 0x03;
+final int PANELY_I = 0x04;
+final int BATTM_V = 0x05;
+final int BATT_V = 0x06;
+final int BATTIN_I = 0x07;
+final int BATTOUT_I = 0x08;
+final int BATT_TEMP = 0x09;
+final int EPS_TEMP = 0x0A;
+final int COMS_V = 0x0B;
+final int COMS_I = 0x0C;
+final int PAY_V = 0x0D;
+final int PAY_I = 0x0E;
+final int OBC_V = 0x0F;
+final int OBC_I = 0x10;
+final int SHUNT_DPOT = 0x11;
+final int COMS_TEMP = 0x12;
+final int OBC_TEMP = 0x13;
+final int PAY_TEMP0 = 0x14;
+final int PAY_TEMP1 = 0x15;
+final int PAY_TEMP2 = 0x16;
+final int PAY_TEMP3 = 0x17;
+final int PAY_TEMP4 = 0x18;
+final int PAY_HUM = 0x19;
+final int PAY_PRESS = 0x1A;
+final int PAY_ACCEL = 0x1B;
+
+// Boundaries for plotting NEED TO BE CHANGED
+float boundaries_high[] = {100, 100, 100, 100, 100, 100};
+float boundaries_low[] = {0, 0, 0, 0, 0, 0};

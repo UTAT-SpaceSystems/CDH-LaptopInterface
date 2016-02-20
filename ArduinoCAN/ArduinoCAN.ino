@@ -47,16 +47,16 @@ void setup()
     // CAN bus running at 250kbs at 16MHz
     int baudRate = CAN.Init(250,16);
     
-    pinMode(7,OUTPUT);
-    pinMode(8,OUTPUT);
+    pinMode(LED1,OUTPUT);
+    pinMode(LED2,OUTPUT);
     
     if(baudRate>0) 
     {
-        Serial.print("READY\n");
+        Serial.print("@READY\n");
     } 
     else 
     {
-        Serial.print("ERROR\n");
+        Serial.print("@ERROR\n");
     }
 }
 
@@ -65,7 +65,7 @@ void loop()
     delay(100);
     message_in_0.id = 0;
     message_in_1.id = 0;
-    
+    request_sensor_data();
     // This implementation utilizes the MCP2515 INT pin to flag received messages or other events
     if(CAN.Interrupt()) 
     {
@@ -85,7 +85,7 @@ void loop()
         if(interruptFlags & TX0IF) 
         {
             // TX buffer 0 sent
-            Serial.print("MSG SENT\n");
+            Serial.print("@MSG SENT\n");
         }
         if(interruptFlags & TX1IF) 
         {
@@ -101,7 +101,7 @@ void loop()
         }
         if(interruptFlags & MERRF) 
         {
-            Serial.print("MSG ERR\n");
+            Serial.print("@MSG ERR\n");
             // error handling code
             // if TXBnCTRL.TXERR set then transmission error
             // if message is lost TXBnCTRL.MLOA will be set
@@ -158,13 +158,18 @@ Frame parseMessageFromSerial(String in)
     {
         f.dlc = 8; 
         // First byte
-        f.id = in.substring(1, 3).toInt();  
+        if(string_to_hex(in.substring(1, 3), f.id) == false)
+        {
+            Serial.println("*Please check your MOB again!");
+            f.dlc = 0;
+            return f;
+        }
         
         for(int i = 0; i < f.dlc; i++ )
         {
-            if(string_to_hex(in.substring(3 + (2 * i), 5 + (2 * i)),f.data[f.dlc - 1 - i]) == false)
+            if(string_to_hex(in.substring(3 + (2 * i), 5 + (2 * i)), f.data[f.dlc - 1 - i]) == false)
             {
-                Serial.println("Input error!!!");
+                Serial.println("*Please check your message again!");
                 f.dlc = 0;
                 return f;
             }
@@ -286,15 +291,18 @@ void request_sensor_data()
     buff.data[7]=0x30;
     buff.data[6]=0x02;
     buff.data[5]=0x02;
-    buff.data[3]=0x00;
-    buff.data[2]=0x00;
-    buff.data[1]=0x00;
-    buff.data[0]=0x00;
-    for(int i = 0x01; i <= 0x1B; i++) // Request data from all sensors
-    {
-        buff.data[4]=i;
+    buff.data[4]=0x09;
+    buff.data[3]=0xF0;
+    buff.data[2]=0xF0;
+    buff.data[1]=0xF0;
+    buff.data[0]=0xF0;
+    //for(int i = 0x01; i <= 0x1B; i++) // Request data from all sensors
+
         sendCANMessage(buff);
-    }
+    //if (Serial.available() <= 0)
+    //{
+    //    Serial.println("*Sensor data requested!");
+    //}
 }
 
 void test()

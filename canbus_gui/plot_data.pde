@@ -28,8 +28,8 @@ void render_plot()
     text("CAN Status:", can_status_pos[0], can_status_pos[1]);
     text("MSG Status:", msg_status_pos[0], msg_status_pos[1]);
     
-    // Bus status
-    if(bus_status)
+    // CAN status
+    if(can_status)
     {
         fill(green);
         can_status_message = "OK";
@@ -260,12 +260,7 @@ void update_plot_data()
 */
 
 void draw_plot(Subsystem s)
-{
-    // X axis label
-    textSize(24);
-    text("T - " + T_MINUS + "s", 300 - 34, HEADER_HEIGHT + displayHeight - 200);
-    text("T - 0s", 300 + DELTA_X * (T_MINUS/(UPDATE_INTERVAL/1000)) - 20, HEADER_HEIGHT + displayHeight - 200);
-    
+{   
     // Selection plot_type
     switch(my_plot)
     {
@@ -275,7 +270,7 @@ void draw_plot(Subsystem s)
             {
                 for(int i = 0; i < s.my_data_list[0].size() - 1; i++)
                 {
-                    line(300+i*DELTA_X, 700-s.my_data_list[0].get(i), 300+(i+1)*DELTA_X, 700-s.my_data_list[0].get(i+1));
+                    line(300 + i * DELTA_X, displayHeight - 150 - s.my_data_list[0].get(i), 300 + (i + 1) * DELTA_X, displayHeight - 150 - s.my_data_list[0].get(i + 1));
                 }
             }
         }
@@ -333,22 +328,80 @@ void draw_plot(Subsystem s)
 }
 
 /*
-* Function that draw the grid in the plot
+* Function that draw the grid and the label
 */
 void draw_grid()
 {
-    int x_interval = (DELTA_X * (T_MINUS/(UPDATE_INTERVAL/1000)))/GRID_X;
-    int y_interval = (displayHeight - 400)/GRID_Y;
+    float x_interval = (DELTA_X * (T_MINUS/(UPDATE_INTERVAL/1000)))/GRID_X;
+    float y_interval = (displayHeight - 400)/GRID_Y;
     
     stroke(100, 100, 100);
     
-    for(int i = 1; i < GRID_X; i++)
+    for(int i = 1; i < GRID_X; i++) // 
     {
-        line(i*x_interval + 300, HEADER_HEIGHT + 154, i*x_interval + 300, HEADER_HEIGHT + displayHeight - 250);
+        line(i * x_interval + 300, HEADER_HEIGHT + 154, i * x_interval + 300, HEADER_HEIGHT + displayHeight - 250);
     }
     for(int i = 1; i < GRID_Y; i++)
     {
-        line(300, HEADER_HEIGHT + 150 + i*y_interval, displayWidth - 120, HEADER_HEIGHT + 150 + i*y_interval); 
+        line(300, HEADER_HEIGHT + 150 + i * y_interval, displayWidth - 120, HEADER_HEIGHT + 150 + i * y_interval); 
+    }
+    resetFormat();
+    
+    draw_label(y_interval);
+}
+
+void draw_label(float y_interval)
+{
+    // X axis label
+    textSize(24);
+    text("T - " + T_MINUS + "s", 300 - 34, HEADER_HEIGHT + displayHeight - 200);
+    text("T - 0s", 300 + DELTA_X * (T_MINUS/(UPDATE_INTERVAL/1000)) - 20, HEADER_HEIGHT + displayHeight - 200);
+    
+    // Y axis label
+     switch(my_plot)
+    {
+        case tempreture:
+        {
+            for(int i = 0; i <= GRID_Y; i++)
+            {
+                text(boundaries_low[0] + (GRID_Y - i) * ((boundaries_high[0] - boundaries_low[0]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
+            }
+        }
+        case voltage:
+        {
+            for(int i = 0; i <= GRID_Y; i++)
+            {
+                text(boundaries_low[1] + (GRID_Y - i) * ((boundaries_high[1] - boundaries_low[1]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
+            }
+        }
+        case current:
+        {
+            for(int i = 0; i <= GRID_Y; i++)
+            {
+                text(boundaries_low[2] + (GRID_Y - i) * ((boundaries_high[2] - boundaries_low[2]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
+            }
+        }
+        case battery:
+        {
+            for(int i = 0; i <= GRID_Y; i++)
+            {
+                text(boundaries_low[3] + (GRID_Y - i) * ((boundaries_high[3] - boundaries_low[3]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
+            }
+        }
+        case pressure:
+        {
+            for(int i = 0; i <= GRID_Y; i++)
+            {
+                text(boundaries_low[4] + (GRID_Y - i) * ((boundaries_high[4] - boundaries_low[4]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
+            }
+        }
+        case humidity:
+        {
+            for(int i = 0; i <= GRID_Y; i++)
+            {
+                text(boundaries_low[5] + (GRID_Y - i) * ((boundaries_high[5] - boundaries_low[5]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
+            }
+        }
     }
     resetFormat();
 }

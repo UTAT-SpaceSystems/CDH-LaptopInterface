@@ -8,6 +8,8 @@
 *                 Albert Xie
 *
 *   01/12/16      Steven Yin          Compatible with Processing 3.0.1, Added COM selector, Prevent overwriting log file
+*
+*   02/19/6       Steven Yin          Change file structure, and added plot_data
 */
 
 
@@ -57,11 +59,11 @@ void setup()
     DELTA_X = (displayWidth - 400)/(T_MINUS/(UPDATE_INTERVAL/1000));
     
     // Create subsystems with color
-    adcs = new Subsystem(ADCS_IDS, plot_red);
-    cdh = new Subsystem(CDH_IDS, plot_green);
-    coms = new Subsystem(COMS_IDS, plot_blue);
-    eps = new Subsystem(EPS_IDS, plot_yellow);
-    payl = new Subsystem(PAYL_IDS, plot_pink);
+    adcs = new Subsystem(plot_red);
+    cdh = new Subsystem(plot_green);
+    coms = new Subsystem(plot_blue);
+    eps = new Subsystem(plot_yellow);
+    payl = new Subsystem(plot_pink);
     
     // Baud rate must match the Arduino serial baud rate
     baud_rate = 9600;
@@ -79,8 +81,9 @@ void setup()
     dh = new DisposeHandler(this);
     
     // Stream data structs
-    bus_stream = new LinkedList();
+    arduino_stream = new LinkedList();
     outgoing_message_stream = new LinkedList();
+    can_stream = new LinkedList();
     
     // Initialize subsystem arraylist
     array_list_init();
@@ -134,76 +137,147 @@ void draw()
     if (!in_string.equals("#\n") && !(in_string.charAt(0) == '^'))
     {
         // CAN status confirmation
-        if (in_string.equals("READY\n"))
+        if (in_string.equals("@READY\n") &&  !can_status)
         {
-            bus_status = true;
+            can_status = true;
         }
-        else if (in_string.equals("ERROR\n"))
+        else if (in_string.equals("@ERROR\n") && can_status)
         {
-            bus_status = false;
+            can_status = false;
         }
         // Sending message from PC status
-        else if (in_string.equals("MSG SENT\n"))
+        else if (in_string.equals("@MSG SENT\n") && !msg_status)
         {
             msg_status = true;
         }
-        else if (in_string.equals("MSG ERR\n"))
+        else if (in_string.equals("@MSG ERR\n") && msg_status)
         {
             msg_status = false;
+        }
+        else if (in_string.charAt(0) == '*') // A message from Arduino
+        {
+            if (arduino_stream.size() < MESSAGE_NUM)
+                {
+                    time = new Date();
+                    arduino_stream.add("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
+                }
+                else
+                {
+                    arduino_stream.remove();
+                    time = new Date();
+                    arduino_stream.add("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
+                }
+                
+            // Write the data in a log file
+            time = new Date();
+            log.println("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
         }
         else
         {
             String[] frame = parse_data(in_string);
-            
-            // Check for matching or default filter
-            if (filter.equals(frame[0]) || filter.equals("00"))
+            if(frame[1] != "")
             {
-                // Stream size check
-                if (bus_stream.size() < 14)
+                // Check for matching or default filter
+                if (filter.equals(frame[0]) || filter.equals("00"))
                 {
-                    bus_stream.add("ID: " + frame[0] + "        DATA: " + frame[1]);
+                    // Stream size check
+                    if (can_stream.size() < MESSAGE_NUM)
+                    {
+                        time = new Date();
+                        can_stream.add("TIME: " + time_f.format(time) + "        MOB_ID: " + frame[0] + "        DATA: " + frame[1]);
+                    }
+                    else
+                    {
+                        can_stream.remove();
+                        time = new Date();
+                        can_stream.add("TIME: " + time_f.format(time) + "        MOB_ID: " + frame[0] + "        DATA: " + frame[1]);
+                    }
+                    
+                    // Write the data in a log file
+                    time = new Date();
+                    log.println("TIME: " + time_f.format(time) + "        MOB_ID: " + frame[0] + "        DATA: " + frame[1]);
                 }
-                else
-                {
-                    bus_stream.remove();
-                    bus_stream.add("ID: " + frame[0] + "        DATA: " + frame[1]);
-                }
-                
-                // Write the data in a log file
-                log.println("ID: " + frame[0] + "        DATA: " + frame[1]);
-            }
-            
-            /********************** ADCS *********************/
-            if (mailed_to(frame[0], s_list.get(0).mailbox_ids))
-            {
-            }
-            /********************** CDH **********************/
-            else if (mailed_to(frame[0], s_list.get(1).mailbox_ids))
-            {
-                if (!cdh.temp_avail)
-                {
-                    cdh.temp_avail = true;
-                }
-                
-                float data = (float) Long.parseLong(frame[1], 16);
-                
-                cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
                 //System.out.println(frame[1]);
-                //System.out.println((float)Long.parseLong(frame[1],16));
-                s_list.get(1).is_updated[0] = true;
-                s_list.get(1).my_data[0] = cdh.temp;
-            }
-            /********************** COMS *********************/
-            else if (mailed_to(frame[0], s_list.get(2).mailbox_ids))
-            {
-            }
-            /********************** EPS **********************/
-            else if (mailed_to(frame[0], s_list.get(3).mailbox_ids))
-            {
-            }
-            /********************** PAYL *********************/
-            else if (mailed_to(frame[0], s_list.get(4).mailbox_ids))
-            {
+                //System.out.println(frame[1].length());
+                int sensor_id = Integer.parseInt(frame[1].substring(6,8), 16);
+                
+                switch(sensor_id)
+                {
+                    // Example case
+                    /*
+                    case SENSOR_NAME:
+                    // If no conversion on senssor data is needed otherwise convert data to integer
+                    subsystem.sensor = Integer.parseInt(frame[1].substring(//The part of message you want to read//), 16);
+                    s_list.get(number of subsystem).my_data[number of sensor] = subsystem.sensor * (displayHeight - 400) / (boundaries_high[number of subsystem] - boundaries_low[number of subsystem]);
+                    s_list.get(number of subsystem).is_updated[number of sensor] = true;
+                    */
+                    case PANELX_V:
+                    case PANELX_I:
+                    case PANELY_V:
+                    case PANELY_I:
+                    case BATTM_V:
+                    case BATT_V:
+                    case BATTIN_I:
+                    case BATTOUT_I:
+                    case BATT_TEMP:
+                    case EPS_TEMP:
+                    {
+                        eps.temp = 100;
+                        s_list.get(3).is_updated[0] = true;
+                        s_list.get(3).my_data[0] = 100;
+                        break;
+                    }
+                    case COMS_V:
+                    case COMS_I:
+                    case PAY_V:
+                    case PAY_I:
+                    case OBC_V:
+                    case OBC_I:
+                    case SHUNT_DPOT:
+                    case COMS_TEMP:
+                    case OBC_TEMP:
+                    case PAY_TEMP0:
+                    case PAY_TEMP1:
+                    case PAY_TEMP2:
+                    case PAY_TEMP3:
+                    case PAY_TEMP4:
+                    case PAY_HUM:
+                    case PAY_PRESS:
+                    case PAY_ACCEL:
+                }
+                
+                ///********************** ADCS *********************/
+                //if (mailed_to(frame[0], s_list.get(0).mailbox_ids))
+                //{
+                //}
+                ///********************** CDH **********************/
+                //else if (mailed_to(frame[0], s_list.get(1).mailbox_ids))
+                //{
+                //    if (!cdh.temp_avail)
+                //    {
+                //        cdh.temp_avail = true;
+                //    }
+                    
+                //    float data = (float) Long.parseLong(frame[1], 16);
+                    
+                //    cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
+                //    //System.out.println(frame[1]);
+                //    //System.out.println((float)Long.parseLong(frame[1],16));
+                //    s_list.get(1).is_updated[0] = true;
+                //    s_list.get(1).my_data[0] = cdh.temp;
+                //}
+                ///********************** COMS *********************/
+                //else if (mailed_to(frame[0], s_list.get(2).mailbox_ids))
+                //{
+                //}
+                ///********************** EPS **********************/
+                //else if (mailed_to(frame[0], s_list.get(3).mailbox_ids))
+                //{
+                //}
+                ///********************** PAYL *********************/
+                //else if (mailed_to(frame[0], s_list.get(4).mailbox_ids))
+                //{
+                //}
             }
         }
     }
@@ -212,33 +286,33 @@ void draw()
     in_string = "#\n";
 }
 
-/*
-* Checks to see if a message belongs to a particular subsystem.
-* String id - Incoming message id
-* String[] mailbox_ids - Subsystem mailbox ids
-* Returns true if the message is addressed to the subsystem
-*/
-boolean mailed_to (String id, String[] mailbox_ids)
-{
+///*
+//* Checks to see if a message belongs to a particular subsystem.
+//* String id - Incoming message id
+//* String[] mailbox_ids - Subsystem mailbox ids
+//* Returns true if the message is addressed to the subsystem
+//*/
+//boolean mailed_to (String id, String[] mailbox_ids)
+//{
     
-    for (int i = 0; i < mailbox_ids.length; i++)
-    {
-        // Partial or incomplete messages may throw an exception
-        try
-        {
-            if (Integer.toString(unhex(id)).equals(mailbox_ids[i]))
-            {
-                return true;
-            }
-        }
-        // Ignore the data 
-        catch (NumberFormatException e)
-        {
-            return false;
-        }
-    }
-    return false;
-}
+//    for (int i = 0; i < mailbox_ids.length; i++)
+//    {
+//        // Partial or incomplete messages may throw an exception
+//        try
+//        {
+//            if (Integer.toString(unhex(id)).equals(mailbox_ids[i]))
+//            {
+//                return true;
+//            }
+//        }
+//        // Ignore the data 
+//        catch (NumberFormatException e)
+//        {
+//            return false;
+//        }
+//    }
+//    return false;
+//}
 
 float convert_to_temp(float temp)
 {
@@ -284,7 +358,10 @@ void serial_event(Serial arduino)
         String temporary = arduino.readStringUntil('\n');
         if(temporary != null)
         {
-            in_string = temporary;
+            if((temporary.charAt(0) == '@') || (temporary.charAt(0) == '*') || (temporary.charAt(0) == '$'))
+            {
+                in_string = temporary;
+            }
         }
     }
 }
@@ -295,8 +372,7 @@ void serial_event(Serial arduino)
 * Returns a String array with two elements, the first being the ID & and the second is the message.
 */
 String[] parse_data(String str)
-{
-    
+{    
     String[] raw = split(str.substring(1, str.length() - 3), "/");
     String[] values = new String[2];
     String message = "";
@@ -409,8 +485,8 @@ void render_graphics()
     text("CAN Status:", can_status_pos[0], can_status_pos[1]);
     text("MSG Status:", msg_status_pos[0], msg_status_pos[1]);
     
-    // Bus status
-    if(bus_status)
+    // CAN bus status
+    if(can_status)
     {
         fill(green);
         can_status_message = "OK";
@@ -536,14 +612,16 @@ void render_graphics()
     text("FILTER", displayWidth - 135, 400);
     
     resetFormat();
-    text("BUS", displayWidth / 8, 445);
+    text("ARDUINO", displayWidth / 8 - 20, 445);
     text("SENT MESSAGES", displayWidth/2 - (displayWidth / 8) - 60, 445);
+    text("CAN BUS", 3*displayWidth/4 - 60, 445);
     rect(0, 455, displayWidth, 4);
     
     fill(yellow);
     
-    display_stream(bus_stream, LEFT_JUSTIFY);
+    display_stream(arduino_stream, LEFT_JUSTIFY);
     display_stream(outgoing_message_stream, (displayWidth / 4) + LEFT_JUSTIFY);
+    display_stream(can_stream, (displayWidth / 2) + LEFT_JUSTIFY);
 }
 
 void mouseClicked()
@@ -564,14 +642,14 @@ void mouseClicked()
                 message = "^" + out_id + out_data + "\n";
             }
             
-            if (outgoing_message_stream.size() < 14)
+            if (outgoing_message_stream.size() < MESSAGE_NUM)
             {
-                outgoing_message_stream.add("ID: " + out_id + "        DATA: " + out_data);
+                outgoing_message_stream.add("MOB_ID: " + out_id + "        DATA: " + out_data);
             }
             else
             {
                 outgoing_message_stream.remove();
-                outgoing_message_stream.add("ID: " +  out_id + "        DATA: " + out_data);
+                outgoing_message_stream.add("MOB_ID: " +  out_id + "        DATA: " + out_data);
             }
             
             arduino.write(message);
@@ -686,7 +764,6 @@ void establishContact()
 /*
  * Request for sensor update based on pre-set time
  */
- 
  void request_sensor_update()
  {
      long dt = System.currentTimeMillis() - last_date;
@@ -696,3 +773,49 @@ void establishContact()
          last_date = System.currentTimeMillis();
      }
  }
+ 
+ ///*
+ //* Function that convert hex like "FF" to integer
+ //*/
+ //int string_to_hex(String in)
+{//
+ //   int c1 = in.charAt(0);
+ //   int c2 = in.charAt(1);
+ //   int out = 0;
+ //   if(c1 >= '0' && c1<= '9')
+ //   {
+ //       out = c1 - '0';
+ //   }
+ //   else if(c1 >= 'a' && c1 <= 'f')
+ //   {
+ //       out = c1 - 'a' + 10;
+ //   }
+ //   else if(c1 >= 'A' && c1 <= 'F')
+ //   {
+ //       out = c1 -'A' + 10;
+ //   }
+ //   else
+ //   {
+ //       return -1;
+ //   }
+    
+ //   out *= 16;
+    
+ //   if(c2 >= '0' && c2<= '9')
+ //   {
+ //       out = out + c2 - '0';
+ //   }
+ //   else if(c2 >= 'a' && c2 <= 'f')
+ //   {
+ //       out = out + c2 - 'a' + 10;
+ //   }
+ //   else if(c2 >= 'A' && c2 <= 'F')
+ //   {
+ //       out = out + c2 -'A' + 10;
+ //   }
+ //   else
+ //   {
+ //       return -1;
+ //   }
+ //   return out;
+}//
