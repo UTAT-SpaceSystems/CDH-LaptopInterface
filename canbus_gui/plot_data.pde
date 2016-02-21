@@ -4,9 +4,9 @@
 
 * DEVELOPMENT HISTORY:
 *   Date          Author              Description of Change
-*   2/12/16       Steven Yin          Added functions to plot data
+*   02/12/16      Steven Yin          Added functions to plot data
 *
-*   2/21/16       Steven Yin          Changed data structure
+*   02/21/16      Steven Yin          Changed data structure
 */
 
 
@@ -24,39 +24,12 @@ void render_plot()
     image(crest, 10, 20);
     resetFormat();
     
-    //Rendering CAN Status Inicator
+    //Rendering mode
     fill(white);
-    text("CAN Status:", can_status_pos[0], can_status_pos[1]);
-    text("MSG Status:", msg_status_pos[0], msg_status_pos[1]);
-    
-    // CAN status
-    if(can_status)
-    {
-        fill(green);
-        can_status_message = "OK";
-    }
-    else
-    {
-        fill(red);
-        textFont(bold, 16);
-        can_status_message = "ERROR";
-    }
-    
-    text(can_status_message, can_status_pos[0] + 95, can_status_pos[1]);
-    
-    // Message send status
-    if (msg_status)
-    {
-        fill(green);
-        msg_status_message = "SENT";
-    }
-    else
-    {
-        fill(grey);
-        msg_status_message = "NA/ERR";
-    }
-    
-    text(msg_status_message, msg_status_pos[0] + 95, msg_status_pos[1]);
+    if(mode == 0)
+        text("CAN_MODE",displayWidth - 170, (HEADER_HEIGHT / 2) - 30);
+    else if(mode == 1)
+        text("TRANS_MODE",displayWidth - 170, (HEADER_HEIGHT / 2) - 30);
     
     resetFormat();
     
@@ -131,7 +104,7 @@ void render_plot()
     }
     rect(440, HEADER_HEIGHT + 20, 120, 40, 8);
     fill(black);
-    text("ACCELERATION", 465, HEADER_HEIGHT + 45);
+    text("ACCEL", 475, HEADER_HEIGHT + 45);
     
     resetFormat();
     

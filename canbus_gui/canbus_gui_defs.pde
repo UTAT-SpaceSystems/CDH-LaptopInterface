@@ -4,9 +4,9 @@
 
 * DEVELOPMENT HISTORY:
 *   Date          Author              Description of Change
-*   2/13/16       Steven Yin          File created
+*   02/13/16      Steven Yin          File created
 *
-*   2/21/16       Steven Yin          Changed data structure
+*   02/21/16      Steven Yin          Changed data structure
 */
 
 // Imports
@@ -16,6 +16,9 @@ import javax.swing.JOptionPane;
 import java.util.Queue;
 import java.util.LinkedList;
 import processing.serial.*;
+
+// Working mode
+int mode = 0;
 
 // The time object
 Date time;
@@ -82,19 +85,21 @@ ArrayList<SensorGroup> full_sensor_list = new ArrayList();
 String[] fields = {"TEMP [C]", "VOLTAGE [V]", "CURRENT [mA]", "ACCELERATION %", "PRES [KPa]", "HUMIDITY %"};
 
 int[] column_centers = new int[fields.length];
-int[] can_status_pos = new int[2];
-int[] msg_status_pos = new int[2];
 
 // Data streams for arduino, outgoing messages ans can bus
+String arduino_status_message;
 Queue arduino_stream;
 
 String msg_status_message;
 Queue outgoing_message_stream;
-boolean msg_status = false;
 
 String can_status_message;
 Queue can_stream;
-boolean can_status;
+
+// Staus variables
+int arduino_status = 0;
+int can_status = 0;
+int msg_status = 0;
 
 // Sensor Groups
 SensorGroup temp = new SensorGroup(SensorType.tempreture);

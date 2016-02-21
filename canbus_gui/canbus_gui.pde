@@ -11,7 +11,7 @@
 *
 *   02/19/16      Steven Yin          Change file structure, and added plot_data
 *
-*   2/21/16       Steben Yin          Re-structured the program
+*   02/21/16      Steven Yin          Re-structured the program
 *
 */
 
@@ -19,6 +19,8 @@
 void close()
 {
     arduino.stop();
+    log.flush();
+    log.close();
 }
 
 // Set GUI fullscreen 
@@ -53,10 +55,6 @@ void setup()
     crest = loadImage("crest.png");
     
     column_centers = new int[fields.length];
-    
-    // Set message heights
-    can_status_pos = new int[]{displayWidth - 170, (HEADER_HEIGHT / 2) - 30};
-    msg_status_pos = new int[]{displayWidth - 170, (HEADER_HEIGHT / 2) - 10};
     
     // Delta x for the plot
     DELTA_X = (displayWidth - 400)/(T_MINUS/(UPDATE_INTERVAL/1000));
@@ -140,31 +138,33 @@ void draw()
     // Check to see if there are messages on the bus 
     serial_event(arduino);
 
-    // ^ case is to ignore echo when the PC sends a message
-    // # is a blank default until messages start coming in
-    if (!in_string.equals("#\n") && !(in_string.charAt(0) == '^'))
+    // Ignore blank message and echo inputs
+    if (!in_string.equals("#\n") && !(in_string.charAt(0) == '^') && !(in_string.charAt(0) == '~'))
     {
-        // CAN status confirmation
-        if (in_string.equals("@READY\n") &&  !can_status)
+        //Status confirmation
+        if(in_string.charAt(0) == '@')
         {
-            can_status = true;
-            in_string = "#\n";
-        }
-        else if (in_string.equals("@ERROR\n") && can_status)
-        {
-            can_status = false;
-            in_string = "#\n";
-        }
-        // Sending message from PC status
-        else if (in_string.equals("@MSG SENT\n") && !msg_status)
-        {
-            msg_status = true;
-            in_string = "#\n";
-        }
-        else if (in_string.equals("@MSG ERR\n") && msg_status)
-        {
-            msg_status = false;
-            in_string = "#\n";
+            if (in_string.equals("@ARDUINO_OK\n"))
+            {
+                arduino_status = 1;
+                println("!!!");
+            }
+            else if (in_string.equals("@CAN_OK\n"))
+            {
+                can_status = 1;
+            }
+            else if (in_string.equals("@CAN_ERR\n"))
+            {
+                can_status = 2;
+            }
+            else if (in_string.equals("@MSG_OK\n"))
+            {
+                msg_status = 1;
+            }
+            else if (in_string.equals("@MSG_ERR\n"))
+            {
+                msg_status = 2;
+            }
         }
         else if (in_string.charAt(0) == '*') // A message from Arduino
         {
@@ -184,7 +184,7 @@ void draw()
             time = new Date();
             log.println("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
         }
-        else
+        else if (in_string.charAt(0) == '$')
         {
             String[] frame = parse_data(in_string);
             if(frame[1] != "")
@@ -209,8 +209,6 @@ void draw()
                     time = new Date();
                     log.println("TIME: " + time_f.format(time) + "        MOB_ID: " + Integer.parseInt(frame[0], 16) + "        DATA: " + frame[1]);
                 
-                    //System.out.println(frame[1]);
-                    //System.out.println(frame[1].length());
                     int sensor_id = Integer.parseInt(frame[1].substring(6,8), 16);
                     
                     switch(sensor_id)
@@ -219,9 +217,9 @@ void draw()
                         /*
                         case SENSOR_NAME:
                         // If no conversion on senssor data is needed otherwise convert data to integer
-                        subsystem.sensor = Integer.parseInt(frame[1].substring(//The part of message you want to read//), 16);
-                        s_list.get(number of subsystem).my_data[number of sensor] = subsystem.sensor * (displayHeight - 400) / (boundaries_high[number of subsystem] - boundaries_low[number of subsystem]);
-                        s_list.get(number of subsystem).is_updated[number of sensor] = true;
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(1,3), 16);
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
                         */
                         case PANELX_V:
                         case PANELX_I:
@@ -271,7 +269,7 @@ void draw()
 */
 void serial_event(Serial arduino)
 {
-    if (arduino != null)
+    if (arduino.available() > 0)
     {
         String temporary = arduino.readStringUntil('\n');
         if(temporary != null)
@@ -296,7 +294,7 @@ String[] parse_data(String str)
     String message = "";
     values[0] = raw[0];
 
-    for(int i = 1; i <= 8; i++)
+    for(int i = 1; i < 8; i++)
     {
         message += raw[i];
     }
@@ -322,39 +320,75 @@ void render_graphics()
     image(crest, 10, 20);
     resetFormat();
     
-    //Rendering CAN Status Inicator
+    //Rendering mode
     fill(white);
-    text("CAN Status:", can_status_pos[0], can_status_pos[1]);
-    text("MSG Status:", msg_status_pos[0], msg_status_pos[1]);
+    if(mode == 0)
+        text("CAN_MODE",displayWidth - 170, (HEADER_HEIGHT / 2) - 30);
+    else if(mode == 1)
+        text("TRANS_MODE",displayWidth - 170, (HEADER_HEIGHT / 2) - 30);
+        
+    //Rendering status  
+    text("Arduino Status:", 100, HEADER_HEIGHT + 50);
+    text("CAN Status:", 300, HEADER_HEIGHT + 50);
+    text("MSG Status:", 500, HEADER_HEIGHT + 50);
+    
+    // Arduino status
+    switch(arduino_status)
+    {
+        case 0:
+        fill(grey);
+        arduino_status_message = "NOT CONNECTED";
+        break;
+        
+        case 1:
+        fill(green);
+        arduino_status_message = "OK";
+        break;
+    }
+    
+    text(arduino_status_message, 100, HEADER_HEIGHT + 100);
     
     // CAN bus status
-    if(can_status)
+    switch(can_status)
     {
+        case 0:
+        fill(grey);
+        can_status_message = "NA";
+        break;
+        
+        case 1:
         fill(green);
         can_status_message = "OK";
-    }
-    else
-    {
+        break;
+        
+        case 2:
         fill(red);
-        textFont(bold, 16);
         can_status_message = "ERROR";
+        break;
     }
     
-    text(can_status_message, can_status_pos[0] + 95, can_status_pos[1]);
+    text(can_status_message, 300, HEADER_HEIGHT + 100);
     
     // Message send status
-    if (msg_status)
+    switch(msg_status)
     {
-        fill(green);
-        msg_status_message = "SENT";
-    }
-    else
-    {
+        case 0:
         fill(grey);
-        msg_status_message = "NA/ERR";
+        msg_status_message = "NA";
+        break;
+        
+        case 1:
+        fill(green);
+        msg_status_message = "OK";
+        break;
+        
+        case 2:
+        fill(red);
+        msg_status_message = "ERROR";
+        break;
     }
     
-    text(msg_status_message, msg_status_pos[0] + 95, msg_status_pos[1]);
+    text(msg_status_message, 500, HEADER_HEIGHT + 100);
     
     resetFormat();
     
