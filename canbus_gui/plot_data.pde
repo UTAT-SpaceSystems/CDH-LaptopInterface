@@ -6,6 +6,7 @@
 *   Date          Author              Description of Change
 *   2/12/16       Steven Yin          Added functions to plot data
 *
+*   2/21/16       Steven Yin          Changed data structure
 */
 
 
@@ -119,7 +120,7 @@ void render_plot()
     
     resetFormat();
     
-    // Battery button
+    // Acceleration button
     if (mouseX > 440 && mouseX < 560 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
     {
         fill(white);
@@ -130,7 +131,7 @@ void render_plot()
     }
     rect(440, HEADER_HEIGHT + 20, 120, 40, 8);
     fill(black);
-    text("BATTERY", 465, HEADER_HEIGHT + 45);
+    text("ACCELERATION", 465, HEADER_HEIGHT + 45);
     
     resetFormat();
     
@@ -167,33 +168,11 @@ void render_plot()
     rect(0, HEADER_HEIGHT, displayWidth, 6);
     rect(0, HEADER_HEIGHT + 80, displayWidth, 6);
     
-    // Draw the colour box
-    rect(20, HEADER_HEIGHT + 150, 150, 4);
-    rect(20, HEADER_HEIGHT + 150, 4, 300);
-    rect(20, HEADER_HEIGHT + 446, 150, 4);
-    rect(170, HEADER_HEIGHT + 150, 4, 300);
-    
-    rect(20, HEADER_HEIGHT + 209, 150, 4);
-    rect(20, HEADER_HEIGHT + 268, 150, 4);
-    rect(20, HEADER_HEIGHT + 327, 150, 4);
-    rect(20, HEADER_HEIGHT + 386, 150, 4);
-    
-    text("ADCS", 40, HEADER_HEIGHT + 189);
-    text("CDH", 40, HEADER_HEIGHT + 248);
-    text("COMS", 40, HEADER_HEIGHT + 307);
-    text("EPS", 40, HEADER_HEIGHT + 366);
-    text("PAYL", 40, HEADER_HEIGHT + 425);
-    
-    fill(s_list.get(0).plot_color);
-    rect(110, HEADER_HEIGHT + 167, 30, 30);
-    fill(s_list.get(1).plot_color);
-    rect(110, HEADER_HEIGHT + 226, 30, 30);
-    fill(s_list.get(2).plot_color);
-    rect(110, HEADER_HEIGHT + 285, 30, 30);
-    fill(s_list.get(3).plot_color);
-    rect(110, HEADER_HEIGHT + 344, 30, 30);
-    fill(s_list.get(4).plot_color);
-    rect(110, HEADER_HEIGHT + 403, 30, 30);
+    for(int i = 0; i < full_sensor_list.get(my_plot.value()).sensor_list.size(); i++)
+    {
+        fill(full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_color);
+        text(full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_name, 20, HEADER_HEIGHT + 190 + i * 60);
+    }
     resetFormat();
     
     // Plot space
@@ -204,125 +183,53 @@ void render_plot()
     
     draw_grid();
     
-    for(int i = 0; i < s_list.size(); i++)
-    {
-        stroke(s_list.get(i).plot_color);
-        draw_plot(s_list.get(i));
-        resetFormat();
-    }
+    draw_plot();
+
 }
 
-/*
-* Inititalize each linked list with default constructor
-*/
-void linked_list_init()
-{
-    for(int i = 0; i < fields.length; i++)
-    {
-        for(int j = 0; j < s_list.size(); j++)
-        {
-            s_list.get(j).my_data_list[i] = new LinkedList();
-        }
-    }
-}
 
 /*
 * Update the LinkedLists
 */
-
 void update_plot_data()
 {
-    for(int i = 0; i < fields.length; i++)
+    for(int i = 0; i < full_sensor_list.size(); i++)
     {
-        for(int j = 0; j < s_list.size(); j++)
+        for(int j = 0; j < full_sensor_list.get(i).sensor_list.size(); j++)
         {
-            if(s_list.get(j).is_updated[i])
+            if(full_sensor_list.get(i).sensor_list.get(j).sensor_is_updated)
             {
-                if(s_list.get(j).my_data_list[i].size() < (T_MINUS/(UPDATE_INTERVAL/1000))+1)
+                if(full_sensor_list.get(i).sensor_list.get(j).sensor_data.size() < (T_MINUS/(UPDATE_INTERVAL/1000))+1)
                 {
-                    s_list.get(j).my_data_list[i].add(s_list.get(j).my_data[i]);
+                    full_sensor_list.get(i).sensor_list.get(j).sensor_data.add(full_sensor_list.get(i).sensor_list.get(j).sensor_data_buff);
                 }
                 else
                 {
-                    s_list.get(j).my_data_list[i].removeFirst();
-                    s_list.get(j).my_data_list[i].add(s_list.get(j).my_data[i]);
+                    full_sensor_list.get(i).sensor_list.get(j).sensor_data.removeFirst();
+                    full_sensor_list.get(i).sensor_list.get(j).sensor_data.add(full_sensor_list.get(i).sensor_list.get(j).sensor_data_buff);
                 }
-                s_list.get(j).is_updated[i] = false;
+                full_sensor_list.get(i).sensor_list.get(j).sensor_is_updated = false;
             }
         }
     }
-  
 }
 
 /*
 * Function that draw the plot
-* Subsystem s is the subsystem that is going to be ploted
 */
-
-void draw_plot(Subsystem s)
-{   
-    // Selection plot_type
-    switch(my_plot)
+void draw_plot()
+{
+    for(int i = 0; i < full_sensor_list.get(my_plot.value()).sensor_list.size(); i++)
     {
-        case tempreture:
+        if(full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_avail)
         {
-            if(s.temp_avail)
+            stroke(full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_color);
+            float dy =  (displayHeight - 400) / (full_sensor_list.get(my_plot.value()).boundary_high - full_sensor_list.get(my_plot.value()).boundary_low);
+            for(int j = 0; j < full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_data.size() - 1; j++)
             {
-                for(int i = 0; i < s.my_data_list[0].size() - 1; i++)
-                {
-                    line(300 + i * DELTA_X, displayHeight - 150 - s.my_data_list[0].get(i), 300 + (i + 1) * DELTA_X, displayHeight - 150 - s.my_data_list[0].get(i + 1));
-                }
+                line(300 + j * DELTA_X, displayHeight - 150 - (full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_data.get(j) * dy), 300 + (j + 1) * DELTA_X, displayHeight - 150 - full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_data.get(j + 1) * dy);
             }
-        }
-        case voltage:
-        {
-            if(s.volt_avail)
-            {
-                for(int i = 0; i < s.my_data_list[1].size() - 1; i++)
-                {
-                    //Need to be done
-                }
-            }
-        }
-        case current:
-        {
-            if(s.curr_avail)
-            {
-                for(int i = 0; i < s.my_data_list[2].size() - 1; i++)
-                {
-                    //Need to be done
-                }
-            }
-        }
-        case battery:
-        {
-            if(s.batt_avail)
-            {
-                for(int i = 0; i < s.my_data_list[3].size() - 1; i++)
-                {
-                    //Need to be done
-                }
-            }
-        }
-        case pressure:
-        {
-            if(s.pres_avail)
-            {
-                for(int i = 0; i < s.my_data_list[4].size() - 1; i++)
-                {
-                    //Need to be done
-                }
-            }
-        }
-        case humidity:
-        {
-            if(s.humid_avail)
-            {
-                for(int i = 0; i < s.my_data_list[5].size() - 1; i++)
-                {
-                    //Need to be done
-                }
-            }
+            resetFormat();
         }
     }
 }
@@ -358,50 +265,10 @@ void draw_label(float y_interval)
     text("T - 0s", 300 + DELTA_X * (T_MINUS/(UPDATE_INTERVAL/1000)) - 20, HEADER_HEIGHT + displayHeight - 200);
     
     // Y axis label
-     switch(my_plot)
+    textSize(20);
+    for(int i = 0; i <= GRID_Y; i++)
     {
-        case tempreture:
-        {
-            for(int i = 0; i <= GRID_Y; i++)
-            {
-                text(boundaries_low[0] + (GRID_Y - i) * ((boundaries_high[0] - boundaries_low[0]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
-            }
-        }
-        case voltage:
-        {
-            for(int i = 0; i <= GRID_Y; i++)
-            {
-                text(boundaries_low[1] + (GRID_Y - i) * ((boundaries_high[1] - boundaries_low[1]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
-            }
-        }
-        case current:
-        {
-            for(int i = 0; i <= GRID_Y; i++)
-            {
-                text(boundaries_low[2] + (GRID_Y - i) * ((boundaries_high[2] - boundaries_low[2]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
-            }
-        }
-        case battery:
-        {
-            for(int i = 0; i <= GRID_Y; i++)
-            {
-                text(boundaries_low[3] + (GRID_Y - i) * ((boundaries_high[3] - boundaries_low[3]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
-            }
-        }
-        case pressure:
-        {
-            for(int i = 0; i <= GRID_Y; i++)
-            {
-                text(boundaries_low[4] + (GRID_Y - i) * ((boundaries_high[4] - boundaries_low[4]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
-            }
-        }
-        case humidity:
-        {
-            for(int i = 0; i <= GRID_Y; i++)
-            {
-                text(boundaries_low[5] + (GRID_Y - i) * ((boundaries_high[5] - boundaries_low[5]) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
-            }
-        }
+        text(full_sensor_list.get(my_plot.value()).boundary_low + (GRID_Y - i) * ((full_sensor_list.get(my_plot.value()).boundary_high - full_sensor_list.get(my_plot.value()).boundary_low) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
     }
     resetFormat();
 }

@@ -19,7 +19,7 @@ Created: 11/08/2010
 
 typedef struct
 {
-    byte id;      // EID if ide set, SID otherwise
+    unsigned long id;      // EID if ide set, SID otherwise
     byte srr;                  // Standard Frame Remote Transmit Request
     byte rtr;                  // Remote Transmission Request
     byte ide;                  // Extended ID flag

@@ -65,7 +65,7 @@ void loop()
     delay(100);
     message_in_0.id = 0;
     message_in_1.id = 0;
-    request_sensor_data();
+
     // This implementation utilizes the MCP2515 INT pin to flag received messages or other events
     if(CAN.Interrupt()) 
     {
@@ -111,7 +111,7 @@ void loop()
     {
         Serial.print("#\n");
     }
-
+    
     // Print Messages
     if(message_in_0.id>0) 
     {
@@ -158,12 +158,14 @@ Frame parseMessageFromSerial(String in)
     {
         f.dlc = 8; 
         // First byte
-        if(string_to_hex(in.substring(1, 3), f.id) == false)
+        byte temp;
+        if(string_to_hex(in.substring(1, 3), temp) == false)
         {
             Serial.println("*Please check your MOB again!");
             f.dlc = 0;
             return f;
         }
+        f.id = (long) temp;
         
         for(int i = 0; i < f.dlc; i++ )
         {
@@ -229,7 +231,7 @@ void parseCANMessage(Frame message)
     Serial.print("/");
     for(i = 0; i < message.dlc; i++) 
     {
-        print_hex(message.data[i], 8);
+        print_hex(message.data[message.dlc - 1 - i], 8);
         Serial.print("/");
     }
     Serial.println();      
@@ -278,6 +280,7 @@ void establishContact()
     while (Serial.available() <= 0) 
     {
     }
+    Serial.println("*Arduino Connection Established!");
 }
 
 /**
@@ -291,31 +294,19 @@ void request_sensor_data()
     buff.data[7]=0x30;
     buff.data[6]=0x02;
     buff.data[5]=0x02;
-    buff.data[4]=0x09;
-    buff.data[3]=0xF0;
-    buff.data[2]=0xF0;
-    buff.data[1]=0xF0;
-    buff.data[0]=0xF0;
-    //for(int i = 0x01; i <= 0x1B; i++) // Request data from all sensors
-
-        sendCANMessage(buff);
-    //if (Serial.available() <= 0)
-    //{
-    //    Serial.println("*Sensor data requested!");
-    //}
-}
-
-void test()
-{
-    if (Serial.available()<=0) 
+    //buff.data[4]=0x09;
+    //buff.data[3]=0x00;
+    //buff.data[2]=0x00;
+    //buff.data[1]=0x00;
+    //buff.data[0]=0x00;
+    
+    test();
+    if (Serial.available() <= 0)
     {
-        int input_number = random(10, 99);
-        int ones = (input_number%10);
-        int tens = ((input_number/10)%10);
-        Serial.println("$A/"+String(ones)+"/"+String(tens)+"/F/A/9/B/F/1/6/5/4/6/6/5/3/F");
+        Serial.println("*Sensor data requested!");
     }
-}
 
+}
 boolean string_to_hex(String in, byte& out)
 {
     byte c1 = in.charAt(0);
@@ -358,5 +349,16 @@ boolean string_to_hex(String in, byte& out)
     }
     return true;
 }
-
-
+int aa =0;
+void test()
+{
+   // if (Serial.available()<=0) 
+    {
+        int input_number = aa;//random(10, 99);
+        int ones = (input_number%10);
+        int tens = ((input_number/10)%10);
+        Serial.println("$A/"+String(tens)+String(ones)+"/FA/90/0A/65/46/65/3F");
+        aa++;
+    }
+    delay(1000);
+}

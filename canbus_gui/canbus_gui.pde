@@ -9,7 +9,10 @@
 *
 *   01/12/16      Steven Yin          Compatible with Processing 3.0.1, Added COM selector, Prevent overwriting log file
 *
-*   02/19/6       Steven Yin          Change file structure, and added plot_data
+*   02/19/16      Steven Yin          Change file structure, and added plot_data
+*
+*   2/21/16       Steben Yin          Re-structured the program
+*
 */
 
 
@@ -58,13 +61,6 @@ void setup()
     // Delta x for the plot
     DELTA_X = (displayWidth - 400)/(T_MINUS/(UPDATE_INTERVAL/1000));
     
-    // Create subsystems with color
-    adcs = new Subsystem(plot_red);
-    cdh = new Subsystem(plot_green);
-    coms = new Subsystem(plot_blue);
-    eps = new Subsystem(plot_yellow);
-    payl = new Subsystem(plot_pink);
-    
     // Baud rate must match the Arduino serial baud rate
     baud_rate = 9600;
     
@@ -85,11 +81,23 @@ void setup()
     outgoing_message_stream = new LinkedList();
     can_stream = new LinkedList();
     
-    // Initialize subsystem arraylist
-    array_list_init();
+    // Initialize sensors
+    sensor_init();
     
-    // Initialize the linked list
-    linked_list_init();
+    // Add sensorgroup to full_sensor_list
+    full_sensor_list.add(temp);
+    full_sensor_list.add(volt);
+    full_sensor_list.add(curr);
+    full_sensor_list.add(acce);
+    full_sensor_list.add(pres);
+    full_sensor_list.add(humi);
+    
+    // Set the boundaries NEED TO BE CHANGED
+    for(int i = 0; i < fields.length; i++)
+    {
+        full_sensor_list.get(i).boundary_high = 300;
+        full_sensor_list.get(i).boundary_low = 0;
+    }
 }
 
 /*
@@ -99,7 +107,7 @@ void draw()
 {
     //Defaults
     smooth();
-    
+
     background(black);
     surface.setTitle("CAN Bus"); // surface.setTitle for Processing 3
     
@@ -140,19 +148,23 @@ void draw()
         if (in_string.equals("@READY\n") &&  !can_status)
         {
             can_status = true;
+            in_string = "#\n";
         }
         else if (in_string.equals("@ERROR\n") && can_status)
         {
             can_status = false;
+            in_string = "#\n";
         }
         // Sending message from PC status
         else if (in_string.equals("@MSG SENT\n") && !msg_status)
         {
             msg_status = true;
+            in_string = "#\n";
         }
         else if (in_string.equals("@MSG ERR\n") && msg_status)
         {
             msg_status = false;
+            in_string = "#\n";
         }
         else if (in_string.charAt(0) == '*') // A message from Arduino
         {
@@ -184,167 +196,73 @@ void draw()
                     if (can_stream.size() < MESSAGE_NUM)
                     {
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "        MOB_ID: " + frame[0] + "        DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) + "        MOB_ID: " + Integer.parseInt(frame[0], 16) + "        DATA: " + frame[1]);
                     }
                     else
                     {
                         can_stream.remove();
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "        MOB_ID: " + frame[0] + "        DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) + "        MOB_ID: " + Integer.parseInt(frame[0], 16) + "        DATA: " + frame[1]);
                     }
                     
                     // Write the data in a log file
                     time = new Date();
-                    log.println("TIME: " + time_f.format(time) + "        MOB_ID: " + frame[0] + "        DATA: " + frame[1]);
-                }
-                //System.out.println(frame[1]);
-                //System.out.println(frame[1].length());
-                int sensor_id = Integer.parseInt(frame[1].substring(6,8), 16);
+                    log.println("TIME: " + time_f.format(time) + "        MOB_ID: " + Integer.parseInt(frame[0], 16) + "        DATA: " + frame[1]);
                 
-                switch(sensor_id)
-                {
-                    // Example case
-                    /*
-                    case SENSOR_NAME:
-                    // If no conversion on senssor data is needed otherwise convert data to integer
-                    subsystem.sensor = Integer.parseInt(frame[1].substring(//The part of message you want to read//), 16);
-                    s_list.get(number of subsystem).my_data[number of sensor] = subsystem.sensor * (displayHeight - 400) / (boundaries_high[number of subsystem] - boundaries_low[number of subsystem]);
-                    s_list.get(number of subsystem).is_updated[number of sensor] = true;
-                    */
-                    case PANELX_V:
-                    case PANELX_I:
-                    case PANELY_V:
-                    case PANELY_I:
-                    case BATTM_V:
-                    case BATT_V:
-                    case BATTIN_I:
-                    case BATTOUT_I:
-                    case BATT_TEMP:
-                    case EPS_TEMP:
+                    //System.out.println(frame[1]);
+                    //System.out.println(frame[1].length());
+                    int sensor_id = Integer.parseInt(frame[1].substring(6,8), 16);
+                    
+                    switch(sensor_id)
                     {
-                        eps.temp = 100;
-                        s_list.get(3).is_updated[0] = true;
-                        s_list.get(3).my_data[0] = 100;
-                        break;
+                        // Example case
+                        /*
+                        case SENSOR_NAME:
+                        // If no conversion on senssor data is needed otherwise convert data to integer
+                        subsystem.sensor = Integer.parseInt(frame[1].substring(//The part of message you want to read//), 16);
+                        s_list.get(number of subsystem).my_data[number of sensor] = subsystem.sensor * (displayHeight - 400) / (boundaries_high[number of subsystem] - boundaries_low[number of subsystem]);
+                        s_list.get(number of subsystem).is_updated[number of sensor] = true;
+                        */
+                        case PANELX_V:
+                        case PANELX_I:
+                        case PANELY_V:
+                        case PANELY_I:
+                        case BATTM_V:
+                        case BATT_V:
+                        case BATTIN_I:
+                        case BATTOUT_I:
+                        case BATT_TEMP:
+                        case EPS_TEMP:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(1,3), 16);
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
+                        }
+                        case COMS_V:
+                        case COMS_I:
+                        case PAY_V:
+                        case PAY_I:
+                        case OBC_V:
+                        case OBC_I:
+                        case SHUNT_DPOT:
+                        case COMS_TEMP:
+                        case OBC_TEMP:
+                        case PAY_TEMP0:
+                        case PAY_TEMP1:
+                        case PAY_TEMP2:
+                        case PAY_TEMP3:
+                        case PAY_TEMP4:
+                        case PAY_HUM:
+                        case PAY_PRESS:
+                        case PAY_ACCEL:
                     }
-                    case COMS_V:
-                    case COMS_I:
-                    case PAY_V:
-                    case PAY_I:
-                    case OBC_V:
-                    case OBC_I:
-                    case SHUNT_DPOT:
-                    case COMS_TEMP:
-                    case OBC_TEMP:
-                    case PAY_TEMP0:
-                    case PAY_TEMP1:
-                    case PAY_TEMP2:
-                    case PAY_TEMP3:
-                    case PAY_TEMP4:
-                    case PAY_HUM:
-                    case PAY_PRESS:
-                    case PAY_ACCEL:
                 }
-                
-                ///********************** ADCS *********************/
-                //if (mailed_to(frame[0], s_list.get(0).mailbox_ids))
-                //{
-                //}
-                ///********************** CDH **********************/
-                //else if (mailed_to(frame[0], s_list.get(1).mailbox_ids))
-                //{
-                //    if (!cdh.temp_avail)
-                //    {
-                //        cdh.temp_avail = true;
-                //    }
-                    
-                //    float data = (float) Long.parseLong(frame[1], 16);
-                    
-                //    cdh.temp = convert_to_temp(data - SENSOR_OFFSET);
-                //    //System.out.println(frame[1]);
-                //    //System.out.println((float)Long.parseLong(frame[1],16));
-                //    s_list.get(1).is_updated[0] = true;
-                //    s_list.get(1).my_data[0] = cdh.temp;
-                //}
-                ///********************** COMS *********************/
-                //else if (mailed_to(frame[0], s_list.get(2).mailbox_ids))
-                //{
-                //}
-                ///********************** EPS **********************/
-                //else if (mailed_to(frame[0], s_list.get(3).mailbox_ids))
-                //{
-                //}
-                ///********************** PAYL *********************/
-                //else if (mailed_to(frame[0], s_list.get(4).mailbox_ids))
-                //{
-                //}
             }
         }
     }
     
     // Reset the input string
     in_string = "#\n";
-}
-
-///*
-//* Checks to see if a message belongs to a particular subsystem.
-//* String id - Incoming message id
-//* String[] mailbox_ids - Subsystem mailbox ids
-//* Returns true if the message is addressed to the subsystem
-//*/
-//boolean mailed_to (String id, String[] mailbox_ids)
-//{
-    
-//    for (int i = 0; i < mailbox_ids.length; i++)
-//    {
-//        // Partial or incomplete messages may throw an exception
-//        try
-//        {
-//            if (Integer.toString(unhex(id)).equals(mailbox_ids[i]))
-//            {
-//                return true;
-//            }
-//        }
-//        // Ignore the data 
-//        catch (NumberFormatException e)
-//        {
-//            return false;
-//        }
-//    }
-//    return false;
-//}
-
-float convert_to_temp(float temp)
-{
-    float r_ratio, log_result = 0.0, result = 0.0;
-    
-    int i;
-    
-    r_ratio = temp / 1023;  // Convert ADC value to the ratio (of resistances).
-    
-    r_ratio = 1 / (r_ratio);  // Take the inverse.
-    
-    r_ratio = 1 - r_ratio;    // Substract this from one in order to approximate logarithm.
-    
-    for (i = 1; i < 5; i++)    // Natural Logarithm approximation.
-    {
-        if(i > 1)
-        {
-            r_ratio = r_ratio * r_ratio;
-        }
-        
-        r_ratio = r_ratio / i;
-        
-        log_result += r_ratio;
-    }
-    
-    result = (1 / 293.15) + (log_result / 3950);
-    
-    result = 1 / result;
-    
-    result = result - 273.15;    // Degrees Celsius.
-    
-    return result;
 }
 
 /**
@@ -373,96 +291,20 @@ void serial_event(Serial arduino)
 */
 String[] parse_data(String str)
 {    
-    String[] raw = split(str.substring(1, str.length() - 3), "/");
+    String[] raw = split(str.substring(1, str.length()), "/");
     String[] values = new String[2];
     String message = "";
-    
     values[0] = raw[0];
 
-    // Reverse the order of the bytes
-    for(int i = raw.length - 5; i >= 1; i--)
+    for(int i = 1; i <= 8; i++)
     {
         message += raw[i];
     }
-    
     values[1] = message;
 
     return values;
 }
 
-/**
-* Displays all the data for each satellite subsystem.
-* !Currently only displays subsystem temperatures!
-*/
-void display_values(int rowY, Subsystem s)
-{
-    if (s.temp_avail)
-    {
-        fill(green);
-        text(s.temp, column_centers[0], rowY);
-    }
-    else
-    {
-        fill(red);
-        text("NA",  column_centers[0], rowY);
-    }
-    
-    if (s.volt_avail)
-    {
-        text(s.volt, column_centers[1], rowY);
-    }
-    else
-    {
-        fill(red);
-        text("NA", column_centers[1], rowY);
-    }
-    
-    if (s.curr_avail)
-    {
-        fill(green);
-        text(s.curr, column_centers[2], rowY);
-    }
-    else
-    {
-        fill(red);
-        text("NA",  column_centers[2], rowY);
-    }
-    
-    if (s.batt_avail)
-    {
-        fill(green);
-        text(s.batt, column_centers[3], rowY);
-    }
-    else
-    {
-        fill(red);
-        text("NA",  column_centers[3], rowY);
-    }
-    
-    if (s.pres_avail)
-    {
-        fill(green);
-        text(s.pres, column_centers[4], rowY);
-    }
-    else
-    {
-        fill(red);
-        text("NA",  column_centers[4], rowY);
-    }
-    
-    if (s.humid_avail)
-    {
-        fill(green);
-        text(s.humid, column_centers[5], rowY);
-    }
-    else
-    {
-        fill(red);
-        text("NA",  column_centers[5], rowY);
-    }
-    
-    resetFormat();
-}
 
 /**
 * Renders all graphics in the GUI.
@@ -544,53 +386,10 @@ void render_graphics()
     rect(displayWidth - 320, HEADER_HEIGHT - 105, 120, 40, 8);
     fill(black);
     text("PLOT DATA", displayWidth - 305, HEADER_HEIGHT - 80);
-        
-    // Subsystems and columns
-    resetFormat();
-    text("SUBSYSTEMS", LEFT_JUSTIFY, HEADER_HEIGHT + 30);
     
-    //Dynamically Adjusts the widths of columns
-    for(int i = 0; i < fields.length; i++)
-    {
-        text(fields[i], INITIAL_SPACING + (i * (displayWidth - INITIAL_SPACING) / fields.length), HEADER_HEIGHT + 30);
-        rect(INITIAL_SPACING - 10 + (i * (displayWidth - INITIAL_SPACING) / fields.length), HEADER_HEIGHT, 4, 250);
-        column_centers[i] = INITIAL_SPACING - 25 + (i * (displayWidth - INITIAL_SPACING) / fields.length) + ((displayWidth - INITIAL_SPACING) / fields.length)/2 ;        
-    }
-    
-    rect(0, 370, displayWidth, 4);
     fill(blue);
     rect(0, 374, displayWidth, 45);
-    //Underlines the column headers
-    fill(white);
-    rect(0, HEADER_HEIGHT + UNDERLINE_HEIGHT, displayWidth, 6);
     resetFormat();
-    
-    //Drawing the row labels
-    for(int i = 0; i < rows.length; i++)
-    {
-        //Have to figure out how to dynamically describe the 20
-        text(rows[i], LEFT_JUSTIFY, HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40));   //((displayHeight - HEADER_HEIGHT - UNDERLINE_HEIGHT - FOOTER_HEIGHT) / rows.length)));
-        
-        switch(i)
-        {
-            case 0:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(0));
-            break;
-            case 1:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(1));
-            break;
-            case 2:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(2));
-            break;
-            case 3:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(3));
-            break;
-            case 4:
-            display_values(HEADER_HEIGHT + UNDERLINE_HEIGHT + 25 + (i*40), s_list.get(4));
-            break;
-        }
-        
-    }
     
     text("DATA STREAMS", (displayWidth / 2) - 55, 400);
     rect(0, 419, displayWidth, 4);
@@ -673,32 +472,32 @@ void mouseClicked()
         // Tempreturn button
         else if (mouseX > 20 && mouseX < 140 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
         {
-            my_plot=plot_type.tempreture;
+            my_plot=SensorType.tempreture;
         }
         // Voltage button
         else if (mouseX > 160 && mouseX < 280 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
         {
-            my_plot=plot_type.voltage;
+            my_plot=SensorType.voltage;
         }
         // Current button
         else if (mouseX > 300 && mouseX < 420 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
         {
-            my_plot=plot_type.current;
+            my_plot=SensorType.current;
         }
-        // Battery button
+        // Acceleration button
         else if (mouseX > 440 && mouseX < 560 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
         {
-            my_plot=plot_type.battery;
+            my_plot=SensorType.acceleration;
         }
         // Pressure button
         else if (mouseX > 580 && mouseX < 700 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
         {
-            my_plot=plot_type.pressure;
+            my_plot=SensorType.pressure;
         }
         // Humidity button
         else if (mouseX > 720 && mouseX < 840 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
         {
-            my_plot=plot_type.humidity;
+            my_plot=SensorType.humidity;
         }
     }
 }
@@ -731,15 +530,48 @@ void resetFormat()
 }
 
 /*
-* Put all the subsystems into one array list so it will be easier to loop through
+* Put all the sensors into sensorgroups
 */
-void array_list_init()
+void sensor_init()
 {
-    s_list.add(adcs);
-    s_list.add(cdh);
-    s_list.add(coms);
-    s_list.add(eps);
-    s_list.add(payl);
+    // Tempreture sensors
+    temp.add_sensor(new Sensor("BATT_TEMP", 0x09, plot_red));
+    temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_green));
+    temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_blue));
+    temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_yellow));
+    temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_pink));
+    temp.add_sensor(new Sensor("PAY_TEMP1", 0x15, plot_cyan));
+    temp.add_sensor(new Sensor("PAY_TEMP2", 0x16, plot_orange));
+    temp.add_sensor(new Sensor("PAY_TEMP3", 0x17, plot_purple));
+    temp.add_sensor(new Sensor("PAY_TEMP4", 0x18, plot_brown));
+
+    // Voltage sensors
+    volt.add_sensor(new Sensor("PANELX_V", 0x01, plot_red));
+    volt.add_sensor(new Sensor("PANELY_V", 0x03, plot_green));
+    volt.add_sensor(new Sensor("BATTM_V", 0x05, plot_blue));
+    volt.add_sensor(new Sensor("BATT_V", 0x06, plot_yellow));
+    volt.add_sensor(new Sensor("COMS_V", 0x0B, plot_pink));
+    volt.add_sensor(new Sensor("PAY_V", 0x0D, plot_cyan));
+    volt.add_sensor(new Sensor("OBC_V", 0x0F, plot_orange));
+
+    // Current sensors
+    curr.add_sensor(new Sensor("PANELX_I", 0x02, plot_red));
+    curr.add_sensor(new Sensor("PANELY_I", 0x04, plot_green));
+    curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_blue));
+    curr.add_sensor(new Sensor("BATTOUT_I", 0x08, plot_yellow));
+    curr.add_sensor(new Sensor("COMS_I", 0x0C, plot_pink));
+    curr.add_sensor(new Sensor("PAY_I", 0x0E, plot_cyan));
+    curr.add_sensor(new Sensor("OBC_I", 0x10, plot_orange));
+    
+    // Acceleration sensors
+    acce.add_sensor(new Sensor("PAY_ACCEL", 0x1B, plot_red));
+    
+    // Pressure sensors
+    pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));
+    
+    // Humidity sensors
+    humi.add_sensor(new Sensor("PAY_HUM", 0x19, plot_red));
+    
 }
 
 /*
@@ -773,49 +605,3 @@ void establishContact()
          last_date = System.currentTimeMillis();
      }
  }
- 
- ///*
- //* Function that convert hex like "FF" to integer
- //*/
- //int string_to_hex(String in)
-{//
- //   int c1 = in.charAt(0);
- //   int c2 = in.charAt(1);
- //   int out = 0;
- //   if(c1 >= '0' && c1<= '9')
- //   {
- //       out = c1 - '0';
- //   }
- //   else if(c1 >= 'a' && c1 <= 'f')
- //   {
- //       out = c1 - 'a' + 10;
- //   }
- //   else if(c1 >= 'A' && c1 <= 'F')
- //   {
- //       out = c1 -'A' + 10;
- //   }
- //   else
- //   {
- //       return -1;
- //   }
-    
- //   out *= 16;
-    
- //   if(c2 >= '0' && c2<= '9')
- //   {
- //       out = out + c2 - '0';
- //   }
- //   else if(c2 >= 'a' && c2 <= 'f')
- //   {
- //       out = out + c2 - 'a' + 10;
- //   }
- //   else if(c2 >= 'A' && c2 <= 'F')
- //   {
- //       out = out + c2 -'A' + 10;
- //   }
- //   else
- //   {
- //       return -1;
- //   }
- //   return out;
-}//

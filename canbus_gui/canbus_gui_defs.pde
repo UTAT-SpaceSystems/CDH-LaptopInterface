@@ -6,6 +6,7 @@
 *   Date          Author              Description of Change
 *   2/13/16       Steven Yin          File created
 *
+*   2/21/16       Steven Yin          Changed data structure
 */
 
 // Imports
@@ -52,8 +53,33 @@ final color green = color(58, 255, 41);
 final color grey = color(200, 200, 200);
 final color yellow = color(255, 255, 0);
 
-String[] fields = {"TEMP [C]", "VOLTAGE [V]", "CURRENT [mA]", "BATTERY %", "PRES [KPa]", "HUMIDITY %"};
-String[] rows = { "ADCS", "CDH", "COMS", "EPS", "PAYL"};
+// The types for the selection of which to plot
+public enum SensorType
+{
+    tempreture(0),
+    voltage(1),
+    current(2),
+    acceleration(3),
+    pressure(4),
+    humidity(5);
+    
+    int num; // Number 0-5
+    
+    SensorType(int a)
+    {
+        num = a;
+    }
+    
+    int value()
+    {
+        return num;
+    }
+}
+
+// The big object for everything
+ArrayList<SensorGroup> full_sensor_list = new ArrayList();
+
+String[] fields = {"TEMP [C]", "VOLTAGE [V]", "CURRENT [mA]", "ACCELERATION %", "PRES [KPa]", "HUMIDITY %"};
 
 int[] column_centers = new int[fields.length];
 int[] can_status_pos = new int[2];
@@ -70,22 +96,16 @@ String can_status_message;
 Queue can_stream;
 boolean can_status;
 
-// Subsystems & properties
-Subsystem adcs, cdh, coms, eps, payl;
-
-// Put all the Subsystems in arraylist therefore easy to loop through
-ArrayList<Subsystem> s_list = new ArrayList<Subsystem>();
-
-//final String[] ADCS_IDS = {};
-//final String[] CDH_IDS = {"10"};
-//final String[] COMS_IDS = {};
-//final String[] EPS_IDS = {};
-//final String[] PAYL_IDS = {};
+// Sensor Groups
+SensorGroup temp = new SensorGroup(SensorType.tempreture);
+SensorGroup volt = new SensorGroup(SensorType.voltage);
+SensorGroup curr = new SensorGroup(SensorType.current);
+SensorGroup acce = new SensorGroup(SensorType.acceleration);
+SensorGroup pres = new SensorGroup(SensorType.pressure);
+SensorGroup humi = new SensorGroup(SensorType.humidity);
 
 // Number of messages shown
-final int MESSAGE_NUM = 25;
-
-final float SENSOR_OFFSET = 1426063360; // 0x55000000
+final int MESSAGE_NUM = 30;
 
 // Serial Constants
 int baud_rate;
@@ -99,37 +119,40 @@ Serial arduino;
 // Normal interface or plot interface
 boolean isPlot = false;
 
-class Subsystem
+class SensorGroup
 {
-    //String[] mailbox_ids;
+    SensorType type;
+    ArrayList<Sensor> sensor_list = new ArrayList();
+    float boundary_low;
+    float boundary_high; 
     
-    boolean temp_avail = false,
-    volt_avail = false,
-    curr_avail = false,
-    humid_avail = false,
-    batt_avail = false,
-    pres_avail = false;
-    
-    float temp, volt, curr, humid, batt, pres;
-    
-    // LinkedList that saves all data in the past x data points
-    LinkedList<Float>[] my_data_list = new LinkedList[fields.length];
-    
-    // Data update status updated if true
-    boolean is_updated[] = new boolean[fields.length];
-
-    // Data buffer saves updated data
-    float my_data[] = new float[fields.length];
-    
-    // The plot colour for this subsystem
-    color plot_color;
-    
-    Subsystem (color c)
+    SensorGroup(SensorType t) // Constructor
     {
-        //mailbox_ids = mb_ids;
-        plot_color = c;
+        type = t;
     }
     
+    void add_sensor(Sensor s) // Method that add a sensor to a group
+    {
+        sensor_list.add(s);
+    }
+}
+
+class Sensor
+{
+    String sensor_name;
+    int sensor_id;
+    boolean sensor_avail = false;
+    boolean sensor_is_updated = false;
+    LinkedList<Float> sensor_data = new LinkedList();
+    float sensor_data_buff;
+    color sensor_color;
+    
+    Sensor(String name, int id, color c) // Constructor
+    {
+        sensor_name = name;
+        sensor_id = id;
+        sensor_color = c;
+    }
 }
 
 public class DisposeHandler
@@ -171,25 +194,18 @@ final int GRID_X = 10;
 // Grid y
 final int GRID_Y = 10;
 
-// The types for the selection of which to plot
-public enum plot_type
-{
-    tempreture,
-    voltage,
-    current,
-    battery,
-    pressure,
-    humidity;
-}
-
 final color plot_red = color(255, 0, 0);
 final color plot_green = color(0, 255, 0);
 final color plot_blue = color(0, 0, 255);
 final color plot_yellow = color(255, 255, 0);
 final color plot_pink = color(255, 0, 255);
+final color plot_cyan = color(0, 255, 255);
+final color plot_orange = color(255, 128, 0);
+final color plot_purple = color(128, 0, 255);
+final color plot_brown = color(128, 64, 0);
 
 // Plot tempreture by default
-plot_type my_plot = plot_type.tempreture;
+SensorType my_plot = SensorType.tempreture;
 
 /* SENSOR NAMES      */
 final int PANELX_V = 0x01;
@@ -219,7 +235,3 @@ final int PAY_TEMP4 = 0x18;
 final int PAY_HUM = 0x19;
 final int PAY_PRESS = 0x1A;
 final int PAY_ACCEL = 0x1B;
-
-// Boundaries for plotting NEED TO BE CHANGED
-float boundaries_high[] = {100, 100, 100, 100, 100, 100};
-float boundaries_low[] = {0, 0, 0, 0, 0, 0};
