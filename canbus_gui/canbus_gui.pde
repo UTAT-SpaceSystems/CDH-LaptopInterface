@@ -147,7 +147,6 @@ void draw()
             if (in_string.equals("@ARDUINO_OK\n"))
             {
                 arduino_status = 1;
-                println("!!!");
             }
             else if (in_string.equals("@CAN_OK\n"))
             {
@@ -196,18 +195,18 @@ void draw()
                     if (can_stream.size() < MESSAGE_NUM)
                     {
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "        MOB_ID: " + Integer.parseInt(frame[0], 16) + "        DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1]);
                     }
                     else
                     {
                         can_stream.remove();
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "        MOB_ID: " + Integer.parseInt(frame[0], 16) + "        DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1]);
                     }
                     
                     // Write the data in a log file
                     time = new Date();
-                    log.println("TIME: " + time_f.format(time) + "        MOB_ID: " + Integer.parseInt(frame[0], 16) + "        DATA: " + frame[1]);
+                    log.println("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1]);
                 
                     int sensor_id = Integer.parseInt(frame[1].substring(6,8), 16);
                     
@@ -294,7 +293,7 @@ String[] parse_data(String str)
     String message = "";
     values[0] = raw[0];
 
-    for(int i = 1; i < 8; i++)
+    for(int i = 1; i <= 8; i++)
     {
         message += raw[i];
     }
@@ -323,9 +322,9 @@ void render_graphics()
     //Rendering mode
     fill(white);
     if(mode == 0)
-        text("CAN_MODE",displayWidth - 170, (HEADER_HEIGHT / 2) - 30);
+        text("CAN_MODE",displayWidth - 150, (HEADER_HEIGHT / 2) - 30);
     else if(mode == 1)
-        text("TRANS_MODE",displayWidth - 170, (HEADER_HEIGHT / 2) - 30);
+        text("TRANS_MODE",displayWidth - 150, (HEADER_HEIGHT / 2) - 30);
         
     //Rendering status  
     text("Arduino Status:", 100, HEADER_HEIGHT + 50);
@@ -472,7 +471,7 @@ void mouseClicked()
             
             if (out_id != null && out_data != null)
             {
-                message = "^" + out_id + out_data + "\n";
+                message = "^" + out_id  + out_data + "\n";
             }
             
             if (outgoing_message_stream.size() < MESSAGE_NUM)

@@ -17,6 +17,7 @@ Date          Author              Description of Change
 
 #include <SPI.h>
 #include "mcp_can.h"
+#include "QueueArray.h"
 
 // Pin definitions specific to how the MCP2515 is wired up.
 const int SPI_CS_PIN = 10;
@@ -30,8 +31,12 @@ typedef struct
     byte data[8]; // Data bytes
 } Frame;
 
+// The FIFO buffer for serial output
+QueueArray<uint64_t> queue;
+
 byte len;
 byte receive_buf[8];
+uint64_t serial_buf;
 
 // LEDS
 #define LED1      7

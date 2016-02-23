@@ -27,9 +27,9 @@ void render_plot()
     //Rendering mode
     fill(white);
     if(mode == 0)
-        text("CAN_MODE",displayWidth - 170, (HEADER_HEIGHT / 2) - 30);
+        text("CAN_MODE",displayWidth - 150, (HEADER_HEIGHT / 2) - 30);
     else if(mode == 1)
-        text("TRANS_MODE",displayWidth - 170, (HEADER_HEIGHT / 2) - 30);
+        text("TRANS_MODE",displayWidth - 150, (HEADER_HEIGHT / 2) - 30);
     
     resetFormat();
     

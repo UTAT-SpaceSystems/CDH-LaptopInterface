@@ -7,7 +7,7 @@ void setup()
 
 START_INIT:
 
-    if(CAN_OK == CAN.begin(CAN_250KBPS))                   // init can bus : baudrate = 500k
+    if(CAN_OK == CAN.begin(CAN_250KBPS))
     {
         Serial.print("*CAN BUS Shield init ok!\n");
         Serial.print("@CAN_OK\n");
@@ -21,19 +21,22 @@ START_INIT:
     }
 }
 
-
 void loop()
 {
     if(CAN_MSGAVAIL == CAN.checkReceive())    // check if data coming
     {
+        serial_buf = 0;
         CAN.readMsgBuf(&len, receive_buf);    // read data,  len: data length, buf: data buf
-
-        parseCANMessage();
+        for(int i = 0; i < 8; i++)
+        {
+            serial_buf |= ((uint64_t)receive_buf[7 - i]) << (i * 8);
+        }
+        queue.push(serial_buf);
     }
-
+    parseCANMessage();
     // Checks for GUI serial inputs
     if (Serial.available())
-    {       
+    {
         String serial_message = Serial.readStringUntil('\n');
         if(serial_message[0] == '^')
         {
@@ -41,9 +44,7 @@ void loop()
             message_out = parseMessageFromSerial(serial_message);
             
             if (message_out.is_ok)
-            {
-                sendCANMessage(message_out);
-            }
+              sendCANMessage(message_out);
         }
         else if(serial_message[0] == '~')
         {
@@ -64,16 +65,18 @@ Frame parseMessageFromSerial(String in)
     Frame f;
     // First byte
     byte temp;
-    if(string_to_hex(in.substring(1, 3), f.id) == false)
+    if(in.substring(1, 3).toInt() < 1 || in.substring(1, 3).toInt() > 37)
     {
         Serial.print("*Please check your MOB again!\n");
         return f;
     }
+    f.id = in.substring(1, 3).toInt();
     
-    for(int i = 0; i < len; i++ )
+    for(int i = 0; i < 8; i++ )
     {
-        if(string_to_hex(in.substring(3 + (2 * i), 5 + (2 * i)), f.data[len - 1 - i]) == false)
+        if(string_to_hex(in.substring(3 + (2 * i), 5 + (2 * i)), f.data[8 - 1 - i]) == false)
         {
+            Serial.print(in);
             Serial.print("*Please check your message again!\n");
             return f;
         }
@@ -88,7 +91,7 @@ Frame parseMessageFromSerial(String in)
 */
 void sendCANMessage(Frame message)
 {
-  switch(CAN.sendMsgBuf(message.id,0, len, message.data))
+  switch(CAN.sendMsgBuf((int) message.id ,0, 8, message.data))
   {
       case CAN_OK:
       Serial.print("*Message sent!\n");
@@ -111,17 +114,21 @@ void sendCANMessage(Frame message)
 */
 void parseCANMessage()
 { 
-    String data = "";
-    
+    if(!queue.isEmpty())
+    {
+    uint64_t data = queue.pop();
+    byte msg = 0;
     Serial.print("$");
-    print_hex(CAN.getCanId(), 8);
+    Serial.print(CAN.getCanId());
     Serial.print("/");
     for(int i = 0; i < len; i++) 
     {
-        print_hex(receive_buf[len - 1 - i], 8);
+        msg = (byte)(data >> (i * 8));
+        print_hex((int)msg, 8);
         Serial.print("/");
     }
-    Serial.print("\n");      
+    Serial.print("\n");
+    }
 }
 
 /**
@@ -153,6 +160,15 @@ void handleCommand(String in)
 */
 void request_sensor_data()
 {
+    byte send_buf[8];
+    send_buf[7] = 0x30;
+    send_buf[6] = 0x02;
+    send_buf[5] = 0x02;
+    send_buf[4] = 0x09;
+
+    CAN.sendMsgBuf(20 ,0, 8, send_buf);
+
+    Serial.print("*Sensor data requested!\n");
 }
 
 /**
