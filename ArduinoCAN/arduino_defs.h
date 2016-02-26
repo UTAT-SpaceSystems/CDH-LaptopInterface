@@ -27,16 +27,22 @@ MCP_CAN CAN(SPI_CS_PIN);  // Set CS pin
 typedef struct
 {
     boolean is_ok = false; // Ok to send or not
+    boolean is_message = false; // Message from user
     byte id;      // MOB
-    byte data[8]; // Data bytes
+    byte data[8]; // Data
 } Frame;
 
 // The FIFO buffer for serial output
-QueueArray<uint64_t> queue;
+QueueArray<uint64_t> serial_queue;
+
+// The FIFO buffer for send can message
+QueueArray<Frame> send_queue;
 
 byte len;
 byte receive_buf[8];
 uint64_t serial_buf;
+
+volatile int run_counter = 0;
 
 // LEDS
 #define LED1      7

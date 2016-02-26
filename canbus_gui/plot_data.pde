@@ -26,15 +26,16 @@ void render_plot()
     
     //Rendering mode
     fill(white);
+    textSize(20);
     if(mode == 0)
-        text("CAN_MODE",displayWidth - 150, (HEADER_HEIGHT / 2) - 30);
+        text("CAN_MODE",displayWidth - 165, (HEADER_HEIGHT / 2) - 30);
     else if(mode == 1)
-        text("TRANS_MODE",displayWidth - 150, (HEADER_HEIGHT / 2) - 30);
+        text("TRANS_MODE",displayWidth - 165, (HEADER_HEIGHT / 2) - 30);
     
     resetFormat();
     
     // Back button
-    if (mouseX > displayWidth - 320 && mouseX < displayWidth - 200 && mouseY > HEADER_HEIGHT - 105 && mouseY < HEADER_HEIGHT - 65)
+    if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT - 50 && mouseY < HEADER_HEIGHT - 10)
     {
         fill(white);
     }
@@ -42,9 +43,9 @@ void render_plot()
     {
         fill(grey);
     }
-    rect(displayWidth - 320, HEADER_HEIGHT - 105, 120, 40, 8);
+    rect(displayWidth - 170, HEADER_HEIGHT - 50, 120, 40, 8);
     fill(black);
-    text("BACK", displayWidth - 285, HEADER_HEIGHT - 80);
+    text("BACK", displayWidth - 135, HEADER_HEIGHT - 25);
     
     resetFormat();
     

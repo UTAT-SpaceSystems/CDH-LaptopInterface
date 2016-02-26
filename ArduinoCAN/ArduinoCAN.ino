@@ -1,7 +1,19 @@
+/*
+----------------------------------
+UTAT Space Systems CANBus Analyzer
+----------------------------------
+
+DEVELOPMENT HISTORY:
+Date          Author              Description of Change                      
+02/22/16      Steven Yin          Created. Working!
+
+*/
 #include "arduino_defs.h"
 
 void setup()
 {
+    pinMode(LED1, OUTPUT);
+    pinMode(LED2, OUTPUT);
     Serial.begin(9600);
     establishContact();
 
@@ -23,20 +35,26 @@ START_INIT:
 
 void loop()
 {
-    if(CAN_MSGAVAIL == CAN.checkReceive())    // check if data coming
+    if(CAN_MSGAVAIL == CAN.checkReceive()) // check if data coming
     {
+        digitalWrite(LED1, HIGH);
         serial_buf = 0;
-        CAN.readMsgBuf(&len, receive_buf);    // read data,  len: data length, buf: data buf
+        CAN.readMsgBuf(&len, receive_buf); // read data,  len: data length, receive_buf: data buf
         for(int i = 0; i < 8; i++)
         {
             serial_buf |= ((uint64_t)receive_buf[7 - i]) << (i * 8);
         }
-        queue.push(serial_buf);
+        serial_queue.push(serial_buf);
+        digitalWrite(LED1, LOW);
     }
+    run_counter++;
+    
     parseCANMessage();
+    
     // Checks for GUI serial inputs
     if (Serial.available())
     {
+        digitalWrite(LED2, HIGH);
         String serial_message = Serial.readStringUntil('\n');
         if(serial_message[0] == '^')
         {
@@ -44,12 +62,19 @@ void loop()
             message_out = parseMessageFromSerial(serial_message);
             
             if (message_out.is_ok)
-              sendCANMessage(message_out);
+                send_queue.push(message_out);
         }
         else if(serial_message[0] == '~')
         {
             handleCommand(serial_message);
         }
+        digitalWrite(LED2, LOW);
+    }
+    if(run_counter >= 10)
+    {
+        sendCANMessage();
+        delay(100);
+        run_counter = 0;
     }
 }
 
@@ -82,29 +107,36 @@ Frame parseMessageFromSerial(String in)
         }
     }
     f.is_ok = true;
+    f.is_message = true;
     return f;
 }
 
 /**
 * Send CAN message over CAN bus
-* Frame message - CAN frame being sent out over the bus
 */
-void sendCANMessage(Frame message)
+void sendCANMessage()
 {
-  switch(CAN.sendMsgBuf((int) message.id ,0, 8, message.data))
+  if(!send_queue.isEmpty())
   {
-      case CAN_OK:
-      Serial.print("*Message sent!\n");
-      Serial.print("@MSG_OK\n");
-      break;
-      case CAN_GETTXBFTIMEOUT:
-      Serial.print("*Message not sent! CAN_Tx Timeout!\n");
-      Serial.print("@MSG_ERR\n");
-      break;
-      case CAN_SENDMSGTIMEOUT:
-      Serial.print("*Message not sent! Sending Timeout!\n");
-      Serial.print("@MSG_ERR\n");
-      break;
+      Frame message = send_queue.pop();
+      switch(CAN.sendMsgBuf((int) message.id ,0, 8, message.data))
+      {
+          case CAN_OK:
+          if(message.is_message)
+              Serial.print("*Message sent!\n");
+          Serial.print("@MSG_OK\n");
+          break;
+          case CAN_GETTXBFTIMEOUT:
+          if(message.is_message)
+              Serial.print("*Message not sent! CAN_Tx Timeout!\n");
+          Serial.print("@MSG_ERR\n");
+          break;
+          case CAN_SENDMSGTIMEOUT:
+          if(message.is_message)
+              Serial.print("*Message not sent! Sending Timeout!\n");
+          Serial.print("@MSG_ERR\n");
+          break;
+      }
   }
 }
 
@@ -114,9 +146,9 @@ void sendCANMessage(Frame message)
 */
 void parseCANMessage()
 { 
-    if(!queue.isEmpty())
+    if(!serial_queue.isEmpty())
     {
-    uint64_t data = queue.pop();
+    uint64_t data = serial_queue.pop();
     byte msg = 0;
     Serial.print("$");
     Serial.print(CAN.getCanId());
@@ -160,13 +192,20 @@ void handleCommand(String in)
 */
 void request_sensor_data()
 {
-    byte send_buf[8];
-    send_buf[7] = 0x30;
-    send_buf[6] = 0x02;
-    send_buf[5] = 0x02;
-    send_buf[4] = 0x09;
-
-    CAN.sendMsgBuf(20 ,0, 8, send_buf);
+    Frame message_out;
+    message_out.is_ok = true;
+    message_out.id = 20;
+    message_out.data[7] = 0x30;
+    message_out.data[6] = 0x02;
+    message_out.data[5] = 0x02;
+    //message_out.data[4] = 0x09;
+    for(int i = 0x01; i <= 0x1B; i++)
+    {
+        message_out.data[4] = i;
+        send_queue.push(message_out);
+    }
+    //send_queue.push(message_out);
+    //CAN.sendMsgBuf(20 ,0, 8, send_buf);
 
     Serial.print("*Sensor data requested!\n");
 }
@@ -216,6 +255,8 @@ void establishContact()
     }
     Serial.print("*Arduino Connection Established!\n");
     Serial.print("@ARDUINO_OK\n");
+    if(Serial.readStringUntil('\n').equals("1"))
+        trans_mode();
 }
 
 boolean string_to_hex(String in, byte& out)
@@ -260,3 +301,17 @@ boolean string_to_hex(String in, byte& out)
     }
     return true;
 }
+
+/*
+ *  Transceiver mode
+ *
+ */
+void trans_mode()
+{
+    Serial.print("*Transceriver mode!\n");
+    while(1)
+    {
+        
+    }
+}
+
