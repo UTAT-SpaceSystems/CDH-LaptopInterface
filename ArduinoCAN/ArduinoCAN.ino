@@ -38,61 +38,9 @@
 
 /* Includes */
 #include "arduino_defs.h"
-#include "SPI.h"
+#include <SPI.h>
 #include "cmd_strobes.h"
 #include "registers.h"
-
-/* Transceiver Definitions */
-#define PACKET_LENGTH 152
-#define STATUS_INTERVAL 1000
-#define ACK_TIMEOUT 1000
-#define TRANSCEIVER_CYCLE 250
-#define TRANSMIT_TIMEOUT 1000
-#define CALIBRATION_TIMEOUT 5000
-#define DEVICE_ADDRESS 0xA5
-#define REAL_PACKET_LENGTH 76
-#define ACK_LENGTH 3
-#define TM_TIMEOUT 5000
-#define STDFIFO 0x3F
-
-// The following are the states
-#define STATEIDLE   0b000
-#define STATERX     0b001
-#define STATETX     0b010
-#define STATERXERR  0b110
-#define STATETXERR  0b111
-
-/* PUS Standard Definitions */
-#define HK_TASK_ID  0x04
-#define HK_GROUND_ID 0x0F
-
-/* define crystal oscillator frequency to 32MHz */
-#define f_xosc 32000000;
-
-/* SPI PIN DEFINTIONS */
-#define pin_SS 9
-#define pin_RST_TRX 6
-#define pin_MOSI 11
-#define pin_MISO 12
-#define pin_SCK 13
-
-/* Global Variables for Transceiver Operations */
-unsigned long previousTime = 0;
-unsigned long currentTime = millis();
-long int lastTransmit;
-long int lastCycle;
-long int lastAck;
-long int lastToggle;
-long int lastCalibration;
-const int interval = 1000;
-byte rx_mode, tx_mode, rx_length, tx_length;
-byte new_packet[152];
-byte packet_receivedf;
-byte t_message[128];
-byte tx_fail_count;
-byte ack_acquired;
-byte transmitting_sequence_control;
-byte current_tm[PACKET_LENGTH], tm_to_downlink[PACKET_LENGTH], current_tc[PACKET_LENGTH];
 
 /* PROGRAM SELECTION */
 #define PROGRAM_SELECT  0// 1 == CAN-BUS, 0 == TRANSCEIVER
@@ -100,11 +48,11 @@ byte current_tm[PACKET_LENGTH], tm_to_downlink[PACKET_LENGTH], current_tc[PACKET
 void setup()
 {
     Serial.begin(9600);
-
+    establishContact();
+    
 #if PROGRAM_SELECT
     pinMode(LED1, OUTPUT);
     pinMode(LED2, OUTPUT);
-    establishContact();
 
 START_INIT:
 
@@ -123,6 +71,7 @@ START_INIT:
 #endif
 
 #if !PROGRAM_SELECT
+    Serial.print("*Transceriver mode!\n");
     Serial.print("\n**** STARTING GROUNDSTATION INIT ****\n");
     /* Configure Pins */
     pinMode(pin_RST_TRX, OUTPUT);
@@ -141,7 +90,6 @@ START_INIT:
     setup_fake_tc();
     transmit_packet();
     delay(25);
-
     Serial.print("\n**** FINISHING GROUNDSTATION INIT ****\n");
 #endif
 
@@ -159,7 +107,7 @@ void loop()
         {
             serial_buf |= ((uint64_t)receive_buf[7 - i]) << (i * 8);
         }
-        serial_queue.push(serial_buf);
+        can_serial_queue.push(serial_buf);
         digitalWrite(LED1, LOW);
     }
     run_counter++;
@@ -189,7 +137,7 @@ void loop()
             message_out = parseMessageFromSerial(serial_message);
             
             if (message_out.is_ok)
-                send_queue.push(message_out);
+                can_send_queue.push(message_out);
         }
         else if(serial_message[0] == '~')
         {
@@ -198,14 +146,11 @@ void loop()
         run_counter = 0;
         digitalWrite(LED2, LOW);
     }
-<<<<<<< HEAD
     if(run_counter >= 10)
     {
         sendCANMessage();
         delay(100);
     }
-=======
->>>>>>> b414a490ea01254def435846a89a10a6680d38fd
 }
 
 /**
@@ -246,9 +191,9 @@ Frame parseMessageFromSerial(String in)
 */
 void sendCANMessage()
 {
-  if(!send_queue.isEmpty())
+  if(!can_send_queue.isEmpty())
   {
-      Frame message = send_queue.pop();
+      Frame message = can_send_queue.pop();
       switch(CAN.sendMsgBuf((int) message.id ,0, 8, message.data))
       {
           case CAN_OK:
@@ -276,9 +221,9 @@ void sendCANMessage()
 */
 void parseCANMessage()
 { 
-    if(!serial_queue.isEmpty())
+    if(!can_serial_queue.isEmpty())
     {
-    uint64_t data = serial_queue.pop();
+    uint64_t data = can_serial_queue.pop();
     byte msg = 0;
     Serial.print("$");
     Serial.print(CAN.getCanId());
@@ -313,6 +258,12 @@ void handleCommand(String in)
         case REQ_SENSOR_DATA:
         {
             request_sensor_data();
+            break;
+        }
+        case GET_TRANS_DATA:
+        {
+            get_trans_data();
+            break;
         }
     }
 }
@@ -328,16 +279,23 @@ void request_sensor_data()
     message_out.data[7] = 0x30;
     message_out.data[6] = 0x02;
     message_out.data[5] = 0x02;
-    //message_out.data[4] = 0x09;
     for(int i = 0x01; i <= 0x1B; i++)
     {
         message_out.data[4] = i;
-        send_queue.push(message_out);
+        can_send_queue.push(message_out);
     }
-    //send_queue.push(message_out);
-    //CAN.sendMsgBuf(20 ,0, 8, send_buf);
 
     Serial.print("*Sensor data requested!\n");
+}
+
+/**
+* Get data from hk_array[] and send it to the laptop interface
+*/
+void get_trans_data()
+{
+    uint32_t buff = 0;
+    
+    trans_serial_queue.push();
 }
 
 /**
@@ -385,10 +343,18 @@ void establishContact()
     }
     Serial.print("*Arduino Connection Established!\n");
     Serial.print("@ARDUINO_OK\n");
-    if(Serial.readStringUntil('\n').equals("1"))
-        trans_mode();
+    /*
+    Disabled for now, mode will be picked under compile
+    */
+    //if(Serial.readStringUntil('\n').equals("1"))
+    //    trans_mode();
 }
 
+/*
+* return boolean (true if convertion successful, false if there is problem with the input)
+* String in: A string that is 2 character long
+* byte& out: A byte that contains 2 hex digits
+*/
 boolean string_to_hex(String in, byte& out)
 {
     byte c1 = in.charAt(0);
@@ -430,21 +396,6 @@ boolean string_to_hex(String in, byte& out)
         return false;
     }
     return true;
-}
-
-/*
- *  Transceiver mode
- *
- */
-void trans_mode()
-{
-    Serial.print("*Transceriver mode!\n");
-    while(1)
-    {
-        uint8_t buff[152] = {0};
-        //read_trans(*uint8_t);
-        //Serial.print(sensor_name + sensor_data);
-    }
 }
 
 //************************************************************ FUNCTION DECLARATION**********************************************//

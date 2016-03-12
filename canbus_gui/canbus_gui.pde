@@ -91,6 +91,16 @@ void setup()
     full_sensor_list.add(pres);
     full_sensor_list.add(humi);
     
+    // Updating inteval in milliseconds
+    if(mode == 0)
+    {
+        UPDATE_INTERVAL = 5000;
+    }
+    else
+    {
+        UPDATE_INTERVAL = 10000;
+    }
+    
     // Set the boundaries NEED TO BE CHANGED
     for(int i = 0; i < fields.length; i++)
     {

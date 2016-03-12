@@ -186,14 +186,7 @@ public class DisposeHandler
  */
  
 // Updating inteval in milliseconds
-if(mode == 0)
-{
-    final int UPDATE_INTERVAL = 5000;
-}
-else
-{
-    final int UPDATE_INTERVAL = 10000;
-}
+int UPDATE_INTERVAL;
 
 // Last time sensor data request
 long last_date = 0;
