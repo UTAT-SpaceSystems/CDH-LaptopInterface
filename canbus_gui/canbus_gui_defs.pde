@@ -7,6 +7,7 @@
 *   02/13/16      Steven Yin          File created
 *
 *   02/21/16      Steven Yin          Changed data structure
+*
 */
 
 // Imports
@@ -19,6 +20,9 @@ import processing.serial.*;
 
 // Working mode
 int mode = 0;
+
+// Graph mode
+int graph_mode = 1;
 
 // The time object
 Date time;
@@ -181,8 +185,15 @@ public class DisposeHandler
  *
  */
  
- // Updating inteval in milliseconds
-final int UPDATE_INTERVAL = 5000;
+// Updating inteval in milliseconds
+if(mode == 0)
+{
+    final int UPDATE_INTERVAL = 5000;
+}
+else
+{
+    final int UPDATE_INTERVAL = 10000;
+}
 
 // Last time sensor data request
 long last_date = 0;

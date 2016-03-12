@@ -7,6 +7,8 @@
 *   02/12/16      Steven Yin          Added functions to plot data
 *
 *   02/21/16      Steven Yin          Changed data structure
+*
+*   02/25/16      Steven Yin          perfection of UI
 */
 
 

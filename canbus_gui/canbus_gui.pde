@@ -13,6 +13,7 @@
 *
 *   02/21/16      Steven Yin          Re-structured the program
 *
+*   02/25/16      Steven Yin          perfection of UI
 */
 
 
@@ -133,7 +134,10 @@ void draw()
     
     establishContact();
     
-    request_sensor_update();
+    if(graph_mode == 1)
+    {
+        request_sensor_update();
+    }
     
     // Check to see if there are messages on the bus 
     serial_event(arduino);

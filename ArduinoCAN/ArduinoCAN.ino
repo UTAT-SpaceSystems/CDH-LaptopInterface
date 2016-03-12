@@ -68,13 +68,13 @@ void loop()
         {
             handleCommand(serial_message);
         }
+        run_counter = 0;
         digitalWrite(LED2, LOW);
     }
     if(run_counter >= 10)
     {
         sendCANMessage();
         delay(100);
-        run_counter = 0;
     }
 }
 
@@ -188,7 +188,7 @@ void handleCommand(String in)
 }
 
 /**
-* Request sensor data
+* Request all sensor data
 */
 void request_sensor_data()
 {
@@ -311,7 +311,9 @@ void trans_mode()
     Serial.print("*Transceriver mode!\n");
     while(1)
     {
-        
+        uint8_t buff[152] = {0};
+        //read_trans(*uint8_t);
+        //Serial.print(sensor_name + sensor_data);
     }
 }
 
