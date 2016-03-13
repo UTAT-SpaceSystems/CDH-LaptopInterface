@@ -20,6 +20,40 @@ Date          Author              Description of Change
 #include "mcp_can.h"
 #include "QueueArray.h"
 
+/* HK Definitions */
+#define PANELX_V				0x01
+#define PANELX_I				0x02
+#define PANELY_V				0x03
+#define PANELY_I				0x04
+#define BATTM_V					0x05
+#define BATT_V					0x06
+#define BATTIN_I				0x07
+#define BATTOUT_I				0x08
+#define BATT_TEMP				0x09
+#define EPS_TEMP				0x0A
+#define COMS_V					0x0B
+#define COMS_I					0x0C
+#define PAY_V					0x0D
+#define PAY_I					0x0E
+#define OBC_V					0x0F
+#define OBC_I					0x10
+#define SHUNT_DPOT				0x11
+#define COMS_TEMP				0x12
+#define OBC_TEMP				0x13
+#define PAY_TEMP0				0x14
+#define PAY_TEMP1				0x15
+#define PAY_TEMP2				0x16
+#define PAY_TEMP3				0x17
+#define PAY_TEMP4				0x18
+#define PAY_HUM					0x19
+#define PAY_PRESS				0x1A
+#define PAY_ACCEL				0x1B
+#define MPPTX                   0x1C
+#define MPPTY                   0x1D
+#define ABS_TIME_D              0x1E
+#define ABS_TIME_H              0x1F
+#define ABS_TIME_M              0x20
+
 /* Transceiver Definitions */
 #define PACKET_LENGTH 152
 #define STATUS_INTERVAL 1000

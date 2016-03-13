@@ -284,7 +284,6 @@ void request_sensor_data()
         message_out.data[4] = i;
         can_send_queue.push(message_out);
     }
-
     Serial.print("*Sensor data requested!\n");
 }
 
@@ -293,9 +292,17 @@ void request_sensor_data()
 */
 void get_trans_data()
 {
+    // TODO: ABS_TIME_D ABS_TIME_H ABS_TIME_M
     uint32_t buff = 0;
-    
-    trans_serial_queue.push();
+    for(int i = 52; i > 4; i -= 2)
+    {
+        buff = (uint32_t)'?' << 24;
+        buff = buff & ((uint32_t)(((52 - i)/2)+1);
+        buff = buff & ((uint32_t)hk_array[i] << 8);
+        buff = buff & (uint32_t)hk_array[i-1];
+        trans_serial_queue.push(buff);
+        buff = 0;
+    }
 }
 
 /**
