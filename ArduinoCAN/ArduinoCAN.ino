@@ -48,9 +48,9 @@
 void setup()
 {
     Serial.begin(9600);
-    establishContact();
     
 #if PROGRAM_SELECT
+    establishContact();
     pinMode(LED1, OUTPUT);
     pinMode(LED2, OUTPUT);
 
@@ -145,11 +145,6 @@ void loop()
         }
         run_counter = 0;
         digitalWrite(LED2, LOW);
-    }
-    if(run_counter >= 10)
-    {
-        sendCANMessage();
-        delay(100);
     }
 }
 
@@ -297,7 +292,7 @@ void get_trans_data()
     for(int i = 52; i > 4; i -= 2)
     {
         buff = (uint32_t)'?' << 24;
-        buff = buff & ((uint32_t)(((52 - i)/2)+1);
+        buff = buff & (uint32_t)((52 - i) / 2 + 1);
         buff = buff & ((uint32_t)hk_array[i] << 8);
         buff = buff & (uint32_t)hk_array[i-1];
         trans_serial_queue.push(buff);
