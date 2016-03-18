@@ -309,7 +309,7 @@ void get_trans_data()
     for(int i = 52; i > 4; i -= 2)
     {
         buff = (uint32_t)'?' << 24;
-        buff = buff & ((uint32_t)(((52 - i)/2)+1));
+        buff = buff & (uint32_t)((52 - i) / 2 + 1);
         buff = buff & ((uint32_t)hk_array[i] << 8);
         buff = buff & (uint32_t)hk_array[i-1];
         trans_serial_queue.push(buff);
