@@ -95,10 +95,12 @@ void setup()
     if(mode == 0)
     {
         UPDATE_INTERVAL = 5000;
+        T_MINUS = 300;
     }
     else
     {
         UPDATE_INTERVAL = 10000;
+        T_MINUS = 600;
     }
     
     // Set the boundaries NEED TO BE CHANGED
@@ -144,10 +146,7 @@ void draw()
     
     establishContact();
     
-    if(graph_mode == 1)
-    {
-        request_sensor_update();
-    }
+    request_sensor_update();
     
     // Check to see if there are messages on the bus 
     serial_event(arduino);
@@ -235,104 +234,414 @@ void draw()
                             full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
                         */
                         case PANELX_V:
-                        break;
+                        {
+                            full_sensor_list.get(1).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
                         case PANELX_I:
-                        break;
+                        {
+                            full_sensor_list.get(2).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
                         case PANELY_V:
-                        break;
+                        {
+                            full_sensor_list.get(1).sensor_list.get(1).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(1).sensor_is_updated = true;
+                            break;
+                        }
                         case PANELY_I:
-                        break;
+                        {
+                            full_sensor_list.get(2).sensor_list.get(1).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(1).sensor_is_updated = true;
+                            break;
+                        }
                         case BATTM_V:
-                        break;
+                        {
+                            full_sensor_list.get(1).sensor_list.get(2).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(2).sensor_is_updated = true;
+                            break;
+                        }
                         case BATT_V:
-                        break;
+                        {
+                            full_sensor_list.get(1).sensor_list.get(3).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(3).sensor_is_updated = true;
+                            break;
+                        }
                         case BATTIN_I:
-                        break;
+                        {
+                            full_sensor_list.get(2).sensor_list.get(2).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(2).sensor_is_updated = true;
+                            break;
+                        }
                         case BATTOUT_I:
-                        break;
+                        {
+                            full_sensor_list.get(2).sensor_list.get(3).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(3).sensor_is_updated = true;
+                            break;
+                        }
                         case BATT_TEMP:
                         {
                             full_sensor_list.get(0).sensor_list.get(0).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(0).sensor_is_updated = true;
                             break;
                         }
                         case EPS_TEMP:
                         {
                             full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
                             break;
                         }
                         case COMS_V:
-                        break;
+                        {
+                            full_sensor_list.get(1).sensor_list.get(4).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(4).sensor_is_updated = true;
+                            break;
+                        }
                         case COMS_I:
-                        break;
+                        {
+                            full_sensor_list.get(2).sensor_list.get(4).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(4).sensor_is_updated = true;
+                            break;
+                        }
                         case PAY_V:
-                        break;
+                        {
+                            full_sensor_list.get(1).sensor_list.get(5).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(5).sensor_is_updated = true;
+                            break;
+                        }
                         case PAY_I:
-                        break;
+                        {
+                            full_sensor_list.get(2).sensor_list.get(5).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(5).sensor_is_updated = true;
+                            break;
+                        }
                         case OBC_V:
-                        break;
+                        {
+                            full_sensor_list.get(1).sensor_list.get(6).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(6).sensor_is_updated = true;
+                            break;
+                        }
                         case OBC_I:
-                        break;
+                        {
+                            full_sensor_list.get(2).sensor_list.get(6).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(6).sensor_is_updated = true;
+                            break;
+                        }
                         case SHUNT_DPOT:
                         break;
                         case COMS_TEMP:
                         {
                             full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(2).sensor_is_updated = true;
                             break;
                         }
                         case OBC_TEMP:
                         {
                             full_sensor_list.get(0).sensor_list.get(3).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(3).sensor_is_updated = true;
                             break;
                         }
                         case PAY_TEMP0:
                         {
                             full_sensor_list.get(0).sensor_list.get(4).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(4).sensor_is_updated = true;
                             break;
                         }
                         case PAY_TEMP1:
                         {
                             full_sensor_list.get(0).sensor_list.get(5).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(5).sensor_is_updated = true;
                             break;
                         }
                         case PAY_TEMP2:
                         {
                             full_sensor_list.get(0).sensor_list.get(6).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(6).sensor_is_updated = true;
                             break;
                         }
                         case PAY_TEMP3:
                         {
                             full_sensor_list.get(0).sensor_list.get(7).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(7).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(7).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(7).sensor_is_updated = true;
                             break;
                         }
                         case PAY_TEMP4:
                         {
                             full_sensor_list.get(0).sensor_list.get(8).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(8).sensor_data_buff = Integer.parseInt(frame[1].substring(14,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(8).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
                             full_sensor_list.get(0).sensor_list.get(8).sensor_is_updated = true;
                             break;
                         }
                         case PAY_HUM:
-                        break;
+                        {
+                            full_sensor_list.get(5).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(5).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(5).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
                         case PAY_PRESS:
-                        break;
+                        {
+                            full_sensor_list.get(4).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(4).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(4).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
                         case PAY_ACCEL:
+                        {
+                            full_sensor_list.get(3).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(3).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(3).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else if(in_string.charAt(0) == '?')
+        {
+            String[] frame = parse_data_trans(in_string);
+            if(frame[1] != "")
+            {
+                // Check for matching or default filter
+                if (filter.equals(frame[0]) || filter.equals("00"))
+                {
+                    // Stream size check
+                    if (can_stream.size() < MESSAGE_NUM)
+                    {
+                        time = new Date();
+                        can_stream.add("TIME: " + time_f.format(time) + "             TRANS:   " + "            DATA: " + frame[1]);
+                    }
+                    else
+                    {
+                        can_stream.remove();
+                        time = new Date();
+                        can_stream.add("TIME: " + time_f.format(time) + "             TRANS:   " + "            DATA: " + frame[1]);
+                    }
+                    
+                    // Write the data in a log file
+                    time = new Date();
+                    log.println("TIME: " + time_f.format(time) + "             TRANS:   " + "            DATA: " + frame[1]);
+                
+                    int sensor_id = Integer.parseInt(frame[1].substring(1,3), 16);
+                    
+                    switch(sensor_id)
+                    {
+                        // Example case
+                        /*
+                        case SENSOR_NAME:
+                        // If no conversion on senssor data is needed otherwise convert data to integer
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(1,3), 16);
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
+                        */
+                        case PANELX_V:
+                        {
+                            full_sensor_list.get(1).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
+                        case PANELX_I:
+                        {
+                            full_sensor_list.get(2).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
+                        case PANELY_V:
+                        {
+                            full_sensor_list.get(1).sensor_list.get(1).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(1).sensor_is_updated = true;
+                            break;
+                        }
+                        case PANELY_I:
+                        {
+                            full_sensor_list.get(2).sensor_list.get(1).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(1).sensor_is_updated = true;
+                            break;
+                        }
+                        case BATTM_V:
+                        {
+                            full_sensor_list.get(1).sensor_list.get(2).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(2).sensor_is_updated = true;
+                            break;
+                        }
+                        case BATT_V:
+                        {
+                            full_sensor_list.get(1).sensor_list.get(3).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(3).sensor_is_updated = true;
+                            break;
+                        }
+                        case BATTIN_I:
+                        {
+                            full_sensor_list.get(2).sensor_list.get(2).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(2).sensor_is_updated = true;
+                            break;
+                        }
+                        case BATTOUT_I:
+                        {
+                            full_sensor_list.get(2).sensor_list.get(3).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(3).sensor_is_updated = true;
+                            break;
+                        }
+                        case BATT_TEMP:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
+                        case EPS_TEMP:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
+                            break;
+                        }
+                        case COMS_V:
+                        {
+                            full_sensor_list.get(1).sensor_list.get(4).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(4).sensor_is_updated = true;
+                            break;
+                        }
+                        case COMS_I:
+                        {
+                            full_sensor_list.get(2).sensor_list.get(4).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(4).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_V:
+                        {
+                            full_sensor_list.get(1).sensor_list.get(5).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(5).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_I:
+                        {
+                            full_sensor_list.get(2).sensor_list.get(5).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(5).sensor_is_updated = true;
+                            break;
+                        }
+                        case OBC_V:
+                        {
+                            full_sensor_list.get(1).sensor_list.get(6).sensor_avail = true;
+                            full_sensor_list.get(1).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(1).sensor_list.get(6).sensor_is_updated = true;
+                            break;
+                        }
+                        case OBC_I:
+                        {
+                            full_sensor_list.get(2).sensor_list.get(6).sensor_avail = true;
+                            full_sensor_list.get(2).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(2).sensor_list.get(6).sensor_is_updated = true;
+                            break;
+                        }
+                        case SHUNT_DPOT:
                         break;
+                        case COMS_TEMP:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(2).sensor_is_updated = true;
+                            break;
+                        }
+                        case OBC_TEMP:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(3).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(3).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_TEMP0:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(4).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(4).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_TEMP1:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(5).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(5).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_TEMP2:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(6).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(6).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_TEMP3:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(7).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(7).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(7).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_TEMP4:
+                        {
+                            full_sensor_list.get(0).sensor_list.get(8).sensor_avail = true;
+                            full_sensor_list.get(0).sensor_list.get(8).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(0).sensor_list.get(8).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_HUM:
+                        {
+                            full_sensor_list.get(5).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(5).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(5).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_PRESS:
+                        {
+                            full_sensor_list.get(4).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(4).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(4).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
+                        case PAY_ACCEL:
+                        {
+                            full_sensor_list.get(3).sensor_list.get(0).sensor_avail = true;
+                            full_sensor_list.get(3).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(12,16), 16);
+                            full_sensor_list.get(3).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -363,7 +672,7 @@ void serial_event(Serial arduino)
 }
 
 /**
-* Parses the data sent by the Arduino from the bus into the id and message.
+* Parses the data sent by the Arduino from the can bus into the id and message.
 * String str - String read from serial
 * Returns a String array with two elements, the first being the ID & and the second is the message.
 */
@@ -383,6 +692,20 @@ String[] parse_data(String str)
     return values;
 }
 
+/**
+* Parses the data sent by the Arduino from the transceriver into the id and data.
+* String str - String read from serial
+* Returns a String array with two elements, the first being the ID & and the second is the data.
+*/
+String[] parse_data_trans(String str)
+{    
+    String raw = str.substring(1, str.length());
+    String[] values = new String[2];
+    values[0] = "00";
+    values[1] = raw;
+
+    return values;
+}
 
 /**
 * Renders all graphics in the GUI.
@@ -699,7 +1022,16 @@ void establishContact()
      long dt = System.currentTimeMillis() - last_date;
      if(dt >= UPDATE_INTERVAL)
      {
-         arduino.write("~00"); // Reqest all sensor data
+         String str;
+         if(mode == 0)
+         {
+             str = "~00";
+         }
+         else 
+         {
+             str = "~01";
+         }
+         arduino.write(str); // Reqest all sensor data
          last_date = System.currentTimeMillis();
      }
  }

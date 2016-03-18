@@ -19,10 +19,7 @@ import java.util.LinkedList;
 import processing.serial.*;
 
 // Working mode
-int mode = 0;
-
-// Graph mode
-int graph_mode = 1;
+int mode = 1;
 
 // The time object
 Date time;
@@ -192,7 +189,7 @@ int UPDATE_INTERVAL;
 long last_date = 0;
 
 // T minus(the time period showed on the plot) in seconds
-final int T_MINUS = 300;
+int T_MINUS = 300;
 
 // Setting the delta x for the scaling
 int DELTA_X;

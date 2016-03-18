@@ -143,14 +143,10 @@ void loop()
         {
             handleCommand(serial_message);
         }
-        run_counter = 0;
         digitalWrite(LED2, LOW);
     }
-    if(run_counter >= 10)
-    {
-        sendCANMessage();
-        delay(100);
-    }
+    
+    parseTransMessage();
 }
 
 /**
@@ -239,6 +235,22 @@ void parseCANMessage()
 }
 
 /**
+* Prints out all hk data received from the transceiver.
+*/
+void parseTransMessage()
+{
+    if(!trans_serial_queue.isEmpty())
+    {
+        uint32_t buff = trans_serial_queue.pop();
+        for(int i = 0; i < 4; i++)
+        {
+            Serial.print((byte)(buff >> 8));
+        }
+        Serial.print("\n");
+    }
+}
+
+/**
 * Handle the commands which requires arduino to handle
 * String in - String sent over serial from Processing in the following
 * format: ~XX
@@ -297,7 +309,7 @@ void get_trans_data()
     for(int i = 52; i > 4; i -= 2)
     {
         buff = (uint32_t)'?' << 24;
-        buff = buff & ((uint32_t)(((52 - i)/2)+1);
+        buff = buff & ((uint32_t)(((52 - i)/2)+1));
         buff = buff & ((uint32_t)hk_array[i] << 8);
         buff = buff & (uint32_t)hk_array[i-1];
         trans_serial_queue.push(buff);
