@@ -56,9 +56,9 @@ void setup()
 {
     Serial.begin(9600);
     packetsFifo.setPrinter(Serial);
+    //establishContact();
     
 #if PROGRAM_SELECT
-    establishContact();
     pinMode(LED1, OUTPUT);
     pinMode(LED2, OUTPUT);
 
@@ -156,6 +156,8 @@ void loop()
         digitalWrite(LED2, LOW);
         #endif
     }
+    
+    parseTransMessage();
 }
 
 /**
@@ -244,6 +246,22 @@ void parseCANMessage()
     }
 }
 #endif
+
+/**
+* Prints out all hk data received from the transceiver.
+*/
+void parseTransMessage()
+{
+    if(!trans_serial_queue.isEmpty())
+    {
+        uint32_t buff = trans_serial_queue.pop();
+        for(int i = 0; i < 4; i++)
+        {
+            Serial.print((byte)(buff >> 8));
+        }
+        Serial.print("\n");
+    }
+}
 
 /**
 * Handle the commands which requires arduino to handle
