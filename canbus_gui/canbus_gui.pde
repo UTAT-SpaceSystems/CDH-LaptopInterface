@@ -14,6 +14,8 @@
 *   02/21/16      Steven Yin          Re-structured the program
 *
 *   02/25/16      Steven Yin          perfection of UI
+*
+*   03/21/16      Steven Yin          Updated housekeeping definitions
 */
 
 
@@ -47,7 +49,19 @@ void setup()
        System.exit(0);    
     }
 
-    size(displayWidth, displayHeight);  
+    size(displayWidth, displayHeight);
+    
+    // Updating inteval in milliseconds
+    if(mode == 0)
+    {
+        UPDATE_INTERVAL = 5000;
+        T_MINUS = 300;
+    }
+    else
+    {
+        UPDATE_INTERVAL = 10000;
+        T_MINUS = 600;
+    }
   
     // Loading assets
     mono = loadFont("FreeSans-48.vlw");
@@ -90,18 +104,6 @@ void setup()
     full_sensor_list.add(acce);
     full_sensor_list.add(pres);
     full_sensor_list.add(humi);
-    
-    // Updating inteval in milliseconds
-    if(mode == 0)
-    {
-        UPDATE_INTERVAL = 5000;
-        T_MINUS = 300;
-    }
-    else
-    {
-        UPDATE_INTERVAL = 10000;
-        T_MINUS = 600;
-    }
     
     // Set the boundaries NEED TO BE CHANGED
     for(int i = 0; i < fields.length; i++)
@@ -571,77 +573,63 @@ void draw()
                             break;
                         }
                         case SHUNT_DPOT:
+                        // NOT USED
                         break;
-                        case COMS_TEMP:
+                        case COMS_TEMP - 1:
                         {
                             full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
                             full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
                             full_sensor_list.get(0).sensor_list.get(2).sensor_is_updated = true;
                             break;
                         }
-                        case OBC_TEMP:
+                        case OBC_TEMP - 1:
                         {
                             full_sensor_list.get(0).sensor_list.get(3).sensor_avail = true;
                             full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
                             full_sensor_list.get(0).sensor_list.get(3).sensor_is_updated = true;
                             break;
                         }
-                        case PAY_TEMP0:
+                        case PAY_TEMP0 - 1:
                         {
                             full_sensor_list.get(0).sensor_list.get(4).sensor_avail = true;
                             full_sensor_list.get(0).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
                             full_sensor_list.get(0).sensor_list.get(4).sensor_is_updated = true;
                             break;
                         }
-                        case PAY_TEMP1:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(5).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(5).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_TEMP2:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(6).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(6).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_TEMP3:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(7).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(7).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(7).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_TEMP4:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(8).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(8).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(8).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_HUM:
+                        case PAY_TEMP1 - 1:
+                        // NOT USED
+                        break;
+                        case PAY_TEMP2 - 1:
+                        // NOT USED
+                        break;
+                        case PAY_TEMP3 - 1:
+                        // NOT USED
+                        break;
+                        case PAY_TEMP4 - 1:
+                        // NOT USED
+                        break;
+                        case PAY_HUM - 5:
                         {
                             full_sensor_list.get(5).sensor_list.get(0).sensor_avail = true;
                             full_sensor_list.get(5).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
                             full_sensor_list.get(5).sensor_list.get(0).sensor_is_updated = true;
                             break;
                         }
-                        case PAY_PRESS:
+                        case PAY_PRESS - 5:
                         {
                             full_sensor_list.get(4).sensor_list.get(0).sensor_avail = true;
                             full_sensor_list.get(4).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
                             full_sensor_list.get(4).sensor_list.get(0).sensor_is_updated = true;
                             break;
                         }
-                        case PAY_ACCEL:
+                        case PAY_ACCEL - 5:
                         {
                             full_sensor_list.get(3).sensor_list.get(0).sensor_avail = true;
                             full_sensor_list.get(3).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
                             full_sensor_list.get(3).sensor_list.get(0).sensor_is_updated = true;
                             break;
                         }
+                        /* TODO: CASE FOR THE ABS_TIME*/
                     }
                 }
             }
@@ -955,44 +943,82 @@ void resetFormat()
 */
 void sensor_init()
 {
-    // Tempreture sensors
-    temp.add_sensor(new Sensor("BATT_TEMP", 0x09, plot_red));
-    temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_green));
-    temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_blue));
-    temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_yellow));
-    temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_pink));
-    temp.add_sensor(new Sensor("PAY_TEMP1", 0x15, plot_cyan));
-    temp.add_sensor(new Sensor("PAY_TEMP2", 0x16, plot_orange));
-    temp.add_sensor(new Sensor("PAY_TEMP3", 0x17, plot_purple));
-    temp.add_sensor(new Sensor("PAY_TEMP4", 0x18, plot_brown));
+    if (mode == 0)
+    {
+        // Tempreture sensors
+        temp.add_sensor(new Sensor("BATT_TEMP", 0x09, plot_red));
+        temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_green));
+        temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_blue));
+        temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_yellow));
+        temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_pink));
+        temp.add_sensor(new Sensor("PAY_TEMP1", 0x15, plot_cyan));
+        temp.add_sensor(new Sensor("PAY_TEMP2", 0x16, plot_orange));
+        temp.add_sensor(new Sensor("PAY_TEMP3", 0x17, plot_purple));
+        temp.add_sensor(new Sensor("PAY_TEMP4", 0x18, plot_brown));
 
-    // Voltage sensors
-    volt.add_sensor(new Sensor("PANELX_V", 0x01, plot_red));
-    volt.add_sensor(new Sensor("PANELY_V", 0x03, plot_green));
-    volt.add_sensor(new Sensor("BATTM_V", 0x05, plot_blue));
-    volt.add_sensor(new Sensor("BATT_V", 0x06, plot_yellow));
-    volt.add_sensor(new Sensor("COMS_V", 0x0B, plot_pink));
-    volt.add_sensor(new Sensor("PAY_V", 0x0D, plot_cyan));
-    volt.add_sensor(new Sensor("OBC_V", 0x0F, plot_orange));
+        // Voltage sensors
+        volt.add_sensor(new Sensor("PANELX_V", 0x01, plot_red));
+        volt.add_sensor(new Sensor("PANELY_V", 0x03, plot_green));
+        volt.add_sensor(new Sensor("BATTM_V", 0x05, plot_blue));
+        volt.add_sensor(new Sensor("BATT_V", 0x06, plot_yellow));
+        volt.add_sensor(new Sensor("COMS_V", 0x0B, plot_pink));
+        volt.add_sensor(new Sensor("PAY_V", 0x0D, plot_cyan));
+        volt.add_sensor(new Sensor("OBC_V", 0x0F, plot_orange));
 
-    // Current sensors
-    curr.add_sensor(new Sensor("PANELX_I", 0x02, plot_red));
-    curr.add_sensor(new Sensor("PANELY_I", 0x04, plot_green));
-    curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_blue));
-    curr.add_sensor(new Sensor("BATTOUT_I", 0x08, plot_yellow));
-    curr.add_sensor(new Sensor("COMS_I", 0x0C, plot_pink));
-    curr.add_sensor(new Sensor("PAY_I", 0x0E, plot_cyan));
-    curr.add_sensor(new Sensor("OBC_I", 0x10, plot_orange));
-    
-    // Acceleration sensors
-    acce.add_sensor(new Sensor("PAY_ACCEL", 0x1B, plot_red));
-    
-    // Pressure sensors
-    pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));
-    
-    // Humidity sensors
-    humi.add_sensor(new Sensor("PAY_HUM", 0x19, plot_red));
-    
+        // Current sensors
+        curr.add_sensor(new Sensor("PANELX_I", 0x02, plot_red));
+        curr.add_sensor(new Sensor("PANELY_I", 0x04, plot_green));
+        curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_blue));
+        curr.add_sensor(new Sensor("BATTOUT_I", 0x08, plot_yellow));
+        curr.add_sensor(new Sensor("COMS_I", 0x0C, plot_pink));
+        curr.add_sensor(new Sensor("PAY_I", 0x0E, plot_cyan));
+        curr.add_sensor(new Sensor("OBC_I", 0x10, plot_orange));
+        
+        // Acceleration sensors
+        acce.add_sensor(new Sensor("PAY_ACCEL", 0x1B, plot_red));
+        
+        // Pressure sensors
+        pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));
+        
+        // Humidity sensors
+        humi.add_sensor(new Sensor("PAY_HUM", 0x19, plot_red));
+    }
+    else
+    {
+        // Tempreture sensors
+        temp.add_sensor(new Sensor("BATT_TEMP", 0x09, plot_red));
+        temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_green));
+        temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_blue));
+        temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_yellow));
+        temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_pink));
+
+        // Voltage sensors
+        volt.add_sensor(new Sensor("PANELX_V", 0x01, plot_red));
+        volt.add_sensor(new Sensor("PANELY_V", 0x03, plot_green));
+        volt.add_sensor(new Sensor("BATTM_V", 0x05, plot_blue));
+        volt.add_sensor(new Sensor("BATT_V", 0x06, plot_yellow));
+        volt.add_sensor(new Sensor("COMS_V", 0x0B, plot_pink));
+        volt.add_sensor(new Sensor("PAY_V", 0x0D, plot_cyan));
+        volt.add_sensor(new Sensor("OBC_V", 0x0F, plot_orange));
+
+        // Current sensors
+        curr.add_sensor(new Sensor("PANELX_I", 0x02, plot_red));
+        curr.add_sensor(new Sensor("PANELY_I", 0x04, plot_green));
+        curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_blue));
+        curr.add_sensor(new Sensor("BATTOUT_I", 0x08, plot_yellow));
+        curr.add_sensor(new Sensor("COMS_I", 0x0C, plot_pink));
+        curr.add_sensor(new Sensor("PAY_I", 0x0E, plot_cyan));
+        curr.add_sensor(new Sensor("OBC_I", 0x10, plot_orange));
+        
+        // Acceleration sensors
+        acce.add_sensor(new Sensor("PAY_ACCEL", 0x1B, plot_red));
+        
+        // Pressure sensors
+        pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));
+        
+        // Humidity sensors
+        humi.add_sensor(new Sensor("PAY_HUM", 0x19, plot_red));
+    }
 }
 
 /*
@@ -1003,7 +1029,7 @@ void establishContact()
   if(firstContact == false)
   {
     delay(200);
-    while(arduino.available()>0)
+    while(arduino.available() > 0)
     {
         String temp =  arduino.readString();
         arduino.clear(); // clear the serial port buffer
@@ -1031,7 +1057,10 @@ void establishContact()
          {
              str = "~01";
          }
-         arduino.write(str); // Reqest all sensor data
+         if(arduino.available() != 0)
+         {
+            arduino.write(str); // Reqest all sensor data
+         }
          last_date = System.currentTimeMillis();
      }
  }
