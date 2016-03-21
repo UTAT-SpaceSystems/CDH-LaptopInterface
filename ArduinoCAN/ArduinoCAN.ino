@@ -32,7 +32,13 @@
     *   03/12/2016      K: Added my transceiver code so that we can communicate
     *                   with the CC1120.
     *                   Specifically, I've added transceiver.h and PROGRAM_SELECT so that we
-    *                   can pick between running the CAN-Bus program and the transceiver 
+    *                   can pick between running the CAN-Bus program and the transceiver
+    *
+    *   03/20/2016      K: Adding in code for decode_telemetry, verify_telemetry. We now have a bunch
+    *                   of functions which are executed depending on what the (service_type, service_sub_type) is.
+    *                   I plan on implementing the memory service for the CSDC and possibly the scheduling service
+    *                   if time permits.
+    *                   Outgoing packets shall be placed in packetsFifo. The use of it is currently commented out.
     *
     *   03/21/2016      S: Updated for the new housekeeping definitions
     *
@@ -43,14 +49,16 @@
 #include <SPI.h>
 #include "cmd_strobes.h"
 #include "registers.h"
+#include "QueueList.h"
 
-/* PROGRAM SELECTION */
-#define PROGRAM_SELECT  0// 1 == CAN-BUS, 0 == TRANSCEIVER
+/* Queue for Messages to Send */
+QueueList <packet> packetsFifo; 
 
 void setup()
 {
     Serial.begin(9600);
-    establishContact();
+    packetsFifo.setPrinter(Serial);
+    //establishContact();
     
 #if PROGRAM_SELECT
     pinMode(LED1, OUTPUT);
@@ -131,21 +139,24 @@ void loop()
     // Checks for GUI serial inputs
     if (Serial.available())
     {
-        digitalWrite(LED2, HIGH);
         String serial_message = Serial.readStringUntil('\n');
-        if(serial_message[0] == '^')
-        {
-            Frame message_out;
-            message_out = parseMessageFromSerial(serial_message);
-            
-            if (message_out.is_ok)
-                can_send_queue.push(message_out);
-        }
-        else if(serial_message[0] == '~')
+        if(serial_message[0] == '~')
         {
             handleCommand(serial_message);
         }
+        #if PROGRAM_SELECT
+        digitalWrite(LED2, HIGH);
+        else if(serial_message[0] == '^')
+        {
+            Frame message_out;
+            message_out = parseMessageFromSerial(serial_message);
+
+            if (message_out.is_ok)
+                can_send_queue.push(message_out);
+        }
+        run_counter = 0;
         digitalWrite(LED2, LOW);
+        #endif
     }
     
     parseTransMessage();
@@ -184,6 +195,7 @@ Frame parseMessageFromSerial(String in)
     return f;
 }
 
+#if PROGRAM_SELECT
 /**
 * Send CAN message over CAN bus
 */
@@ -235,6 +247,7 @@ void parseCANMessage()
     Serial.print("\n");
     }
 }
+#endif
 
 /**
 * Prints out all hk data received from the transceiver.
@@ -269,11 +282,13 @@ void handleCommand(String in)
     }
     switch(command)
     {
+        #if PROGRAM_SELECT
         case REQ_SENSOR_DATA:
         {
             request_sensor_data();
             break;
         }
+        #endif
         case GET_TRANS_DATA:
         {
             get_trans_data();
@@ -285,6 +300,7 @@ void handleCommand(String in)
 /**
 * Request all sensor data
 */
+#if PROGRAM_SELECT
 void request_sensor_data()
 {
     Frame message_out;
@@ -300,7 +316,7 @@ void request_sensor_data()
     }
     Serial.print("*Sensor data requested!\n");
 }
-
+#endif
 /**
 * Get data from hk_array[] and send it to the laptop interface
 */
@@ -489,14 +505,14 @@ void transceiver_run(void)
     {
         tx_mode = 0;
         rx_length = reg_read2F(NUM_RXBYTES);
-        Serial.print("RX_LENGTH: ");
-        Serial.println(rx_length);
+        //Serial.print("RX_LENGTH: ");
+        //Serial.println(rx_length);
         rxFirst = reg_read2F(RXFIRST);
-        Serial.print("RXFIRST: ");
-        Serial.println(rxFirst);
+       // Serial.print("RXFIRST: ");
+        //Serial.println(rxFirst);
         rxLast = reg_read2F(RXLAST);
-        Serial.print("RXLAST ");
-        Serial.println(rxLast);
+        //Serial.print("RXLAST ");
+        //Serial.println(rxLast);
         /* Got some data */
         if(rx_length)
         {
@@ -509,14 +525,15 @@ void transceiver_run(void)
                 /* We have a packet */
                 if(rx_length <= (rxLast - rxFirst + 1))     // Length = data + address byte + length byte
                 {
-                    check = store_new_packet();
+                    check = check_packet();
                     rx_length = 0;
                     if(!check)                                  // Packet was accepted and stored internally.
                     {
                         Serial.print("\nGOOD PACKET\n");
                         prepareAck();
+                        decode_telemetry();
                         cmd_str(STX);
-                        return;             
+                        return;  
                     }
 
                 }
@@ -526,7 +543,7 @@ void transceiver_run(void)
                 load_ack();
 
                 /* We have an acknowledgment */
-                if(new_packet[1] == 0x41 && new_packet[2] == 0x43 && new_packet[3] == 0x4B) // Received proper acknowledgment.
+                if(tm_to_decode[1] == 0x41 && tm_to_decode[2] == 0x43 && tm_to_decode[3] == 0x4B) // Received proper acknowledgment.
                 {
                     Serial.print("\nRECEIVED ACK\n");
                     lastAck = millis();
@@ -662,6 +679,8 @@ void reg_settings(void)
     reg_write2F(FREQ0, 0x00);               //FREQ0: 0x00   
     return;
 }
+
+
 
 //write to register address addr with data
 byte reg_read(byte addr)
@@ -883,52 +902,45 @@ void prepareAck(void)
     return;
 }
 
-byte store_new_packet(void)
+byte check_packet(void)
 {
-    //byte i;  // packet_height = 0, offset = 0;
-    //unsigned int pec;
+   if(tm_to_decode[76] != 0x18)                  // Characteristic of B151 in a telecommand.
+        return 0xFF; 
 
-    // ...
-
-    /* There is room in the packet list */
-    if(new_packet[76] != 0x18)                  // Characteristic of B151 in a telecommand.
-        return 0xFF;
     return 0x00;
 }
 
 // The packet to be transmitted is assumed to be tm_to_downlink[] and be 152 bytes long.
 byte transmit_packet(void)
 {
+    //if(packetsFifo.isEmpty())
+       //return -1;
+    //packet temp;
+    //temp = packetsFifo.pop();
+    //transceiver_send(temp.array + 76, DEVICE_ADDRESS, 76);
     transceiver_send(tm_to_downlink + 76, DEVICE_ADDRESS, 76);
     return 1;
 }
 
-void clear_new_packet(void)
+void clear_tm_to_decode(void)
 {
     for(byte i = 0; i < 128; i ++){
-        new_packet[i] = 0;
-    }
-}
-
-void clear_current_tc(void)
-{
-    for(byte i = 0; i < PACKET_LENGTH; i ++){
-        current_tc[i] = 0;
+        tm_to_decode[i] = 0;
     }
 }
 
 void load_packet(void)
 {
     byte i = 0;
-    //new_packet[0] = reg_read(STDFIFO);
-    //Serial.println(new_packet[i], HEX);
+    //tm_to_decode[0] = reg_read(STDFIFO);
+    //Serial.println(tm_to_decode[i], HEX);
     for(i = 0; i < (REAL_PACKET_LENGTH + 2); i++)
     {
-        //new_packet[i] = reg_read(STDFIFO);
-        new_packet[i] = dir_FIFO_read(0x80 + i);
+        //tm_to_decode[i] = reg_read(STDFIFO);
+        tm_to_decode[i] = dir_FIFO_read(0x80 + i);
         Serial.print(i);
         Serial.print(": ");
-        Serial.println(new_packet[i], HEX);
+        Serial.println(tm_to_decode[i], HEX);
     }
     return;
 }
@@ -936,13 +948,13 @@ void load_packet(void)
 void load_ack(void)
 {
     byte i = 0;
-    //new_packet[0] = reg_read(STDFIFO);
-    //Serial.println(new_packet[i], HEX);
+    //tm_to_decode[0] = reg_read(STDFIFO);
+    //Serial.println(tm_to_decode[i], HEX);
     for(i = 0; i < (ACK_LENGTH + 2); i++)
     {
-        //new_packet[i] = reg_read(STDFIFO);
-        new_packet[i] = dir_FIFO_read(0x80 + i);
-        Serial.println(new_packet[i], HEX);
+        //tm_to_decode[i] = reg_read(STDFIFO);
+        tm_to_decode[i] = dir_FIFO_read(0x80 + i);
+        Serial.println(tm_to_decode[i], HEX);
     }
     return;
 }
@@ -1004,4 +1016,264 @@ void SS_set_low(void)
 {
     //set_CSn(0);
     delayMicroseconds(1);
+}
+
+int decode_telemetry(void)
+{
+    byte data_field_headerf, apid, i;
+    byte packet_length;
+    int pec1, pec0, x = 0;
+    int packet_id, psc;
+    byte ack, service_type, service_sub_type, source_id;
+    byte version1, type1, sequence_flags1, sequence_count1;
+    byte ccsds_flag, packet_version;
+
+    // CSDC ONLY
+    for(i = 76; i > 0; i--)
+    {
+        tm_to_decode[i + 75] = tm_to_decode[i];
+    }
+    tm_to_decode[75] = tm_to_decode[0];
+    //
+    
+    packet_id = (int)(tm_to_decode[151]);
+    packet_id = packet_id << 8;
+    packet_id |= (int)(tm_to_decode[150]);
+    psc = (int)(tm_to_decode[149]);
+    psc = psc << 8;
+    psc |= (int)(tm_to_decode[148]);
+    
+    // PACKET HEADER
+    version1            = (tm_to_decode[151] & 0xE0) >> 5;
+    type1               = (tm_to_decode[151] & 0x10) >> 4;
+    data_field_headerf  = (tm_to_decode[151] & 0x08) >> 3;
+    apid                = tm_to_decode[150];
+    sequence_flags1     = (tm_to_decode[149] & 0xC0) >> 6;
+    sequence_count1     = tm_to_decode[148];
+    packet_length       = tm_to_decode[146] + 1;                // B137 = PACKET_LENGTH - 1
+    // DATA FIELD HEADER
+    ccsds_flag          = (tm_to_decode[145] & 0X80) >> 7;
+    packet_version      = (tm_to_decode[145] & 0X70) >> 4;
+    ack                 = tm_to_decode[145] & 0X0F;
+    service_type        = tm_to_decode[144];
+    service_sub_type    = tm_to_decode[143];
+    source_id           = tm_to_decode[142];
+    
+    pec1 = (int)(tm_to_decode[1]);
+    pec1 = pec1 << 8;
+    pec1 += (int)(tm_to_decode[0]);
+    
+    /* Check that the packet error control is correct       */
+    //pec0 = fletcher16(tm_to_decode + 2, 150);
+    /* Verify that the telecommand is ready to be decoded.  */
+    x = verify_telemetry(apid, packet_length, pec0, pec1, service_type, service_sub_type, version1, ccsds_flag, packet_version);      // FAILURE_RECOVERY required if x == -1.
+
+    if(x < 0)
+        return -1;
+    /* Decode the telecommand packet                        */      // To be updated on a rolling basis
+    return decode_telemetry_h(service_type, service_sub_type, packet_id, psc);
+}
+
+int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte service_type, byte service_sub_type, byte version, byte ccsds_flag, byte packet_version)
+{
+    uint32_t address = 0, length = 0;
+    byte i;
+    uint32_t new_time = 0, last_time = 0;
+    if(packet_length != PACKET_LENGTH)
+    {
+        Serial.println("INCORRECT PACKET_LENGTH");      // TC verify acceptance report, failure, 1 == invalid packet length
+        return -1;
+    }
+    // if(pec0 != pec1)
+    // {
+    //     Serial.println("INCORRECT CHECKSUM")             // TC verify acceptance report, failure, 2 == invalid PEC (checksum)
+    //     return -1;
+    // }
+    if((service_type != 1) && (service_type != 3) && (service_type != 5) && (service_type != 6) && (service_type != 9) && (service_type != 69))
+    {
+        Serial.println("INVALID SERVICETYPE");
+        return -1;
+    }
+    if(service_type == TC_VERIFY_SERVICE)
+    {
+        if(service_sub_type != 1 && service_sub_type != 2 && service_sub_type != 7 && service_sub_type != 8)
+        {
+            Serial.println("TCV: INCORRECT SERVICESUBTYPE");
+            return -1;
+        }
+    }
+    if(service_type == HK_SERVICE)
+    {
+        if((service_sub_type != 10) && (service_sub_type != 12) && (service_sub_type != 25) && (service_sub_type != 26))
+        {
+            Serial.println("HK: INCORRECT SERVICESUBTYPE");
+            return -1;
+        }
+        if(apid != HK_TASK_ID)
+        {
+            Serial.print("HK: INCORRECT APID: ");
+            Serial.println(apid);
+            return -1;
+        }
+    }
+    if(service_type == MEMORY_SERVICE)
+    {
+        if((service_sub_type != 6) && (service_sub_type != 10))
+        {
+            Serial.println("MEM: INCORRECT SERVICESUBTYPE");
+            return -1;
+        }
+        if(apid != MEM_GROUND_ID)
+        {
+            Serial.println("MEM: INCORRECT APID");
+            return -1;
+        }
+        address =  ((uint32_t)tm_to_decode[137]) << 24;
+        address += ((uint32_t)tm_to_decode[136]) << 16;
+        address += ((uint32_t)tm_to_decode[135]) << 8;
+        address += (uint32_t)tm_to_decode[134];
+        
+        if(tm_to_decode[138] > 1)                                           // Invalid memory ID.
+            Serial.println("MEM: INCORRECT MEMID");
+        if((tm_to_decode[138] == 1) && (address > 0xFFFFF))             // Invalid memory address (too high)
+            Serial.println("MEM: INCORRECT ADDRESS");        
+    }
+    
+    if(service_type == TIME_SERVICE)
+    {
+        if(service_sub_type != 2)
+        {
+            Serial.println("TIME: INCORRECT SERVICESUBTYPE");
+            return -1;          
+        }
+        if(apid != TIME_GROUND_ID)
+        {
+            Serial.println("TIME: INCORRECT APID");
+            return -1;
+        }
+    }
+    
+    if(service_type == K_SERVICE)
+    {
+        if(service_sub_type != 4)
+        {
+            Serial.println("KSERV: INCORRECT SERVICESUBTYPE");
+            return -1;
+        }
+    }
+    // if(service_type == FDIR_SERVICE)
+    // {
+    // }
+    if(version != 0)
+    {
+        Serial.println("INCORRECT VERSION");
+        return -1;
+    }
+    if(ccsds_flag != 1)
+    {
+        Serial.println("INCORRECT CCSDS FLAG");
+        return -1;
+    }
+    if(packet_version != 1)
+    {
+        Serial.println("INCORRECT PACKET VERSION");
+        return -1;
+    }
+    /* The telecommand packet is good to be decoded further!        */
+    Serial.println("VERIFICATION PASSED");
+    return 1;
+}
+
+int decode_telemetry_h(byte service_type, byte service_sub_type, int packet_id, int psc)
+{   
+    tm_to_decode[146] = service_sub_type;
+    tm_to_decode[140] = ((byte)packet_id) >> 8;   // Place packet_id and psc inside command in case a TC verification is needed.
+    tm_to_decode[139] = (byte)packet_id;
+    tm_to_decode[138] = ((byte)psc) >> 8;
+    tm_to_decode[137] = (byte)psc;
+
+    if(service_type == HK_SERVICE)
+        decode_housekeeping();
+    if(service_type == TIME_SERVICE)
+        logIncomingTime();
+    if(service_type == MEMORY_SERVICE)
+        decode_memory();
+    if(service_type == K_SERVICE)
+        decode_kservice();
+    if(service_type == FDIR_SERVICE)
+        decode_fdir();
+    return 1;
+}
+
+void decode_housekeeping(void)
+{
+    byte i;
+    switch(tm_to_decode[146])
+    {
+        case HK_DEFINITON_REPORT:
+            //logHKParameterReport()
+            break;
+        case HK_REPORT:
+            for(i = 4; i < 57; i++)
+            {
+                hk_array[i] = tm_to_decode[i + 75];
+            }
+            Serial.println("HOUSEKEEPING UPDATED");
+            break;
+        default:
+            break;
+    }
+    return;
+}
+
+void logIncomingTime(void)
+{
+    int incomDay, incomHour, incomMinute, incomAbsMinutes, localAbsMinutes;
+    incomDay = tm_to_decode[2];
+    incomHour = tm_to_decode[3];
+    incomMinute = tm_to_decode[4];
+    //logEventReport(1, self.timeReportReceived, 0, "Time Report Received. D: %s H: %s M: %s" %str(incomDay) %incomHour %incomMinute)
+    Serial.print("SAT TIME: D: ");
+    Serial.print(incomHour);
+    Serial.print("H: ");
+    Serial.print(incomHour);
+    Serial.print("M: ");
+    Serial.print(incomMinute);
+    return;
+}
+
+void decode_memory(void)
+{
+    // switch(tm_to_decode[146])
+    // {
+    //     case MEMORY_DUMP_ABS:
+    //         processMemoryDump();
+    //         break;
+    //     case MEMORY_CHECK_ABS:
+    //         processMemoryCheck();
+    //         break;
+    // }
+    return;
+}
+
+void decode_kservice(void)
+{
+    // switch(tm_to_decode[146])
+    // {
+    //     case SCHED_REPORT:
+    //         processSchedReport();
+    //         break;
+    //     case COMPLETED_SCHED_COM_REPORT:
+    //         updateSchedWithCommandStatus();
+    //         break;
+    //     default:
+    //         break;
+    // }
+    return;
+}
+
+void decode_fdir(void)
+{
+    // Nothing yet.
+    return;
 }
