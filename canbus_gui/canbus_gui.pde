@@ -122,7 +122,7 @@ void draw()
     smooth();
 
     background(black);
-    surface.setTitle("CAN Bus"); // surface.setTitle for Processing 3
+    surface.setTitle("HERON Laptop Interface"); // surface.setTitle for Processing 3
     
     // Update plot data in the background
     update_plot_data();
@@ -707,7 +707,7 @@ void render_graphics()
     //Rendering Header
     textFont(title, 50);
     fill(white);
-    text("HERON MK1 CAN Bus", 175, 75);
+    text("HERON Laptop Interface", 175, 75);
     image(crest, 10, 20);
     resetFormat();
     
