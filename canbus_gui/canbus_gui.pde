@@ -1,6 +1,6 @@
 /*
 * FILE NAME: canbus_gui
-* PURPOSE: CAN bus analyzer for UTAT Space System's Heron MK1 CubeSat
+* PURPOSE: CAN bus analyzer for UTAT Space System's Heron CubeSat
 
 * DEVELOPMENT HISTORY:
 *   Date          Author              Description of Change
@@ -572,9 +572,6 @@ void draw()
                             full_sensor_list.get(2).sensor_list.get(6).sensor_is_updated = true;
                             break;
                         }
-                        case SHUNT_DPOT:
-                        // NOT USED
-                        break;
                         case COMS_TEMP - 1:
                         {
                             full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
@@ -596,18 +593,6 @@ void draw()
                             full_sensor_list.get(0).sensor_list.get(4).sensor_is_updated = true;
                             break;
                         }
-                        case PAY_TEMP1 - 1:
-                        // NOT USED
-                        break;
-                        case PAY_TEMP2 - 1:
-                        // NOT USED
-                        break;
-                        case PAY_TEMP3 - 1:
-                        // NOT USED
-                        break;
-                        case PAY_TEMP4 - 1:
-                        // NOT USED
-                        break;
                         case PAY_HUM - 5:
                         {
                             full_sensor_list.get(5).sensor_list.get(0).sensor_avail = true;
@@ -627,6 +612,18 @@ void draw()
                             full_sensor_list.get(3).sensor_list.get(0).sensor_avail = true;
                             full_sensor_list.get(3).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
                             full_sensor_list.get(3).sensor_list.get(0).sensor_is_updated = true;
+                            break;
+                        }
+                        case ABS_TIME_D - 7:
+                        {
+                            break;
+                        }
+                        case ABS_TIME_H - 7:
+                        {
+                            break;
+                        }
+                        case ABS_TIME_M - 7:
+                        {
                             break;
                         }
                         /* TODO: CASE FOR THE ABS_TIME*/

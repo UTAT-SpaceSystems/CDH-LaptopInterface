@@ -256,10 +256,13 @@ void parseTransMessage()
 {
     if(!trans_serial_queue.isEmpty())
     {
+        byte msg = 0;
         uint32_t buff = trans_serial_queue.pop();
-        for(int i = 0; i < 4; i++)
+        Serial.print('?');
+        for(int i = 2; i >= 0; i--)
         {
-            Serial.print((byte)(buff >> 8));
+            msg = (byte)(buff >> (i * 8));
+            print_hex((int)msg, 8);
         }
         Serial.print("\n");
     }
@@ -326,10 +329,10 @@ void get_trans_data()
     uint32_t buff = 0;
     for(int i = 53; i > 4; i -= 2)
     {
-        buff = (uint32_t)'?' << 24;
-        buff = buff & (uint32_t)((53 - i) / 2 + 1);
-        buff = buff & ((uint32_t)hk_array[i] << 8);
-        buff = buff & (uint32_t)hk_array[i-1];
+        buff = ((uint32_t)'?') << 24;
+        buff = buff | ((uint32_t)(((53 - i) / 2 + 1)) << 16);
+        buff = buff | ((uint32_t)hk_array[i] << 8);
+        buff = buff | (uint32_t)hk_array[i-1];
         trans_serial_queue.push(buff);
         buff = 0;
     }
