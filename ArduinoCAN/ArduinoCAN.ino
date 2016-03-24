@@ -56,7 +56,7 @@ void setup()
 {
     Serial.begin(9600);
     packetsFifo.setPrinter(Serial);
-    //establishContact();
+    establishContact();
     
 #if PROGRAM_SELECT
     pinMode(LED1, OUTPUT);
@@ -280,13 +280,11 @@ void handleCommand(String in)
     }
     switch(command)
     {
-        #if PROGRAM_SELECT
         case REQ_SENSOR_DATA:
         {
             request_sensor_data();
             break;
         }
-        #endif
         case GET_TRANS_DATA:
         {
             get_trans_data();
@@ -298,7 +296,6 @@ void handleCommand(String in)
 /**
 * Request all sensor data
 */
-#if PROGRAM_SELECT
 void request_sensor_data()
 {
     Frame message_out;
@@ -310,11 +307,10 @@ void request_sensor_data()
     for(int i = 0x01; i <= 0x1B; i++)
     {
         message_out.data[4] = i;
-        can_send_queue.push(message_out);
+        //can_send_queue.push(message_out);
     }
     Serial.print("*Sensor data requested!\n");
 }
-#endif
 /**
 * Get data from hk_array[] and send it to the laptop interface
 */
@@ -517,9 +513,9 @@ void transceiver_run(void)
             delay(200);      // Relic of working code.
             if(rx_length > REAL_PACKET_LENGTH)
             {
-                Serial.print("\nSTART PACKET\n");
+                Serial.print("\n*START PACKET\n");
                 load_packet();
-                Serial.print("\nEND PACKET\n");
+                Serial.print("\n*END PACKET\n");
                 /* We have a packet */
                 if(rx_length <= (rxLast - rxFirst + 1))     // Length = data + address byte + length byte
                 {
@@ -527,7 +523,7 @@ void transceiver_run(void)
                     rx_length = 0;
                     if(!check)                                  // Packet was accepted and stored internally.
                     {
-                        Serial.print("\nGOOD PACKET\n");
+                        Serial.print("\n*GOOD PACKET\n");
                         prepareAck();
                         decode_telemetry();
                         cmd_str(STX);
@@ -543,7 +539,7 @@ void transceiver_run(void)
                 /* We have an acknowledgment */
                 if(tm_to_decode[1] == 0x41 && tm_to_decode[2] == 0x43 && tm_to_decode[3] == 0x4B) // Received proper acknowledgment.
                 {
-                    Serial.print("\nRECEIVED ACK\n");
+                    Serial.print("\n*RECEIVED ACK\n");
                     lastAck = millis();
                     lastTransmit = millis();
                     //if(last_tx_packet_height)
@@ -579,7 +575,7 @@ void transceiver_run(void)
     }
     if(millis() - lastTransmit > TRANSMIT_TIMEOUT)  // Transmit packet (if one is available)
     {
-        Serial.print("\nSENDING PACKET\n");
+        Serial.print("\n*SENDING PACKET\n");
         cmd_str(SIDLE);
         cmd_str(SFRX);
         cmd_str(SFTX);
@@ -1178,7 +1174,7 @@ int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte s
         return -1;
     }
     /* The telecommand packet is good to be decoded further!        */
-    Serial.println("VERIFICATION PASSED");
+    Serial.println("*VERIFICATION PASSED");
     return 1;
 }
 
@@ -1216,7 +1212,7 @@ void decode_housekeeping(void)
             {
                 hk_array[i] = tm_to_decode[i + 75];
             }
-            Serial.println("HOUSEKEEPING UPDATED");
+            Serial.println("*HOUSEKEEPING UPDATED");
             break;
         default:
             break;

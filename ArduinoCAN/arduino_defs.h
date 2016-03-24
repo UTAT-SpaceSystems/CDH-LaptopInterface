@@ -63,7 +63,7 @@ Date          Author              Description of Change
 #define STATUS_INTERVAL 1000
 #define ACK_TIMEOUT 1000
 #define TRANSCEIVER_CYCLE 250
-#define TRANSMIT_TIMEOUT 3000
+#define TRANSMIT_TIMEOUT 2000
 #define CALIBRATION_TIMEOUT 5000
 #define DEVICE_ADDRESS 0xA5
 #define REAL_PACKET_LENGTH 76
