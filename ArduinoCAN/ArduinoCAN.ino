@@ -322,7 +322,7 @@ void get_trans_data()
     uint32_t buff = 0;
     for(int i = 53; i > 4; i -= 2)
     {
-        buff = (uint32_t)'?' << 24;
+        buff = ((uint32_t)'?') << 24;
         buff = buff & (uint32_t)((53 - i) / 2 + 1);
         buff = buff & ((uint32_t)hk_array[i] << 8);
         buff = buff & (uint32_t)hk_array[i-1];
