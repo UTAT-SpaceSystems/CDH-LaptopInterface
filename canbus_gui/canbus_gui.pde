@@ -108,7 +108,7 @@ void setup()
     // Set the boundaries NEED TO BE CHANGED
     for(int i = 0; i < fields.length; i++)
     {
-        full_sensor_list.get(i).boundary_high = 300;
+        full_sensor_list.get(i).boundary_high = 65535;
         full_sensor_list.get(i).boundary_low = 0;
     }
 }
@@ -152,7 +152,7 @@ void draw()
     
     // Check to see if there are messages on the bus 
     serial_event(arduino);
-
+    
     // Ignore blank message and echo inputs
     if (!in_string.equals("#\n") && !(in_string.charAt(0) == '^') && !(in_string.charAt(0) == '~'))
     {
@@ -435,18 +435,18 @@ void draw()
                     if (can_stream.size() < MESSAGE_NUM)
                     {
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "             TRANS:   " + "            DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) + "             TRANS   " + "            DATA: " + frame[1]);
                     }
                     else
                     {
                         can_stream.remove();
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "             TRANS:   " + "            DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) + "             TRANS   " + "            DATA: " + frame[1]);
                     }
                     
                     // Write the data in a log file
                     time = new Date();
-                    log.println("TIME: " + time_f.format(time) + "             TRANS:   " + "            DATA: " + frame[1]);
+                    log.println("TIME: " + time_f.format(time) + "             TRANS   " + "            DATA: " + frame[1]);
                 
                     int sensor_id = Integer.parseInt(frame[1].substring(0,2), 16);
                     
@@ -648,7 +648,7 @@ void serial_event(Serial arduino)
         String temporary = arduino.readStringUntil('\n');
         if(temporary != null)
         {
-            if((temporary.charAt(0) == '@') || (temporary.charAt(0) == '*') || (temporary.charAt(0) == '$'))
+            if((temporary.charAt(0) == '@') || (temporary.charAt(0) == '*') || (temporary.charAt(0) == '$') || (temporary.charAt(0) == '?'))
             {
                 in_string = temporary;
             }
@@ -1054,10 +1054,7 @@ void establishContact()
          {
              str = "~01";
          }
-         if(arduino.available() != 0)
-         {
-            arduino.write(str); // Reqest all sensor data
-         }
+         arduino.write(str); // Reqest all sensor data
          last_date = System.currentTimeMillis();
      }
  }

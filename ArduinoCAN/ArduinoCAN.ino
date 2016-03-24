@@ -58,7 +58,7 @@ void setup()
 {
     Serial.begin(9600);
     packetsFifo.setPrinter(Serial);
-    //establishContact();
+    establishContact();
     
 #if PROGRAM_SELECT
     pinMode(LED1, OUTPUT);
