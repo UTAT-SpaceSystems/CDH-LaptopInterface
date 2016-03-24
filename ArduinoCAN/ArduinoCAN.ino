@@ -40,6 +40,8 @@
     *                   if time permits.
     *                   Outgoing packets shall be placed in packetsFifo. The use of it is currently commented out.
     *
+    *   03/21/2016      S: Updated for the new housekeeping definitions
+    *
 */
 
 /* Includes */
@@ -318,10 +320,10 @@ void get_trans_data()
 {
     // TODO: ABS_TIME_D ABS_TIME_H ABS_TIME_M
     uint32_t buff = 0;
-    for(int i = 52; i > 4; i -= 2)
+    for(int i = 53; i > 4; i -= 2)
     {
         buff = (uint32_t)'?' << 24;
-        buff = buff & (uint32_t)((52 - i) / 2 + 1);
+        buff = buff & (uint32_t)((53 - i) / 2 + 1);
         buff = buff & ((uint32_t)hk_array[i] << 8);
         buff = buff & (uint32_t)hk_array[i-1];
         trans_serial_queue.push(buff);

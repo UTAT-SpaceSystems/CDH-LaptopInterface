@@ -22,7 +22,7 @@ void render_plot()
     //Rendering Header
     textFont(title, 50);
     fill(white);
-    text("HERON MK1 CAN Bus", 175, 75);
+    text("HERON Laptop Interface", 175, 75);
     image(crest, 10, 20);
     resetFormat();
     
