@@ -91,7 +91,7 @@ START_INIT:
     set_CSn(1);
     delay(1000);
     SPI.setBitOrder(MSBFIRST);    // CC1120 uses MSB First.
-    SPI.setClockDivider(SPI_CLOCK_DIV128);
+    SPI.setClockDivider(SPI_CLOCK_DIV4);
     SPI.begin();
     /* Configure Transceiver */
     transceiver_initialize();
@@ -464,7 +464,7 @@ void transceiver_initialize(void)
 void transceiver_run(void)
 {
     byte *state, *CHIP_RDYn, rxFirst, rxLast, txFirst, txLast, check;
-    delay(250);
+    delay(50);
     if (millis() - lastCycle < TRANSCEIVER_CYCLE)
         return;
     
@@ -953,7 +953,7 @@ void load_ack(void)
     {
         //tm_to_decode[i] = reg_read(STDFIFO);
         tm_to_decode[i] = dir_FIFO_read(0x80 + i);
-        Serial.println(tm_to_decode[i], HEX);
+        //Serial.println(tm_to_decode[i], HEX);
     }
     return;
 }
