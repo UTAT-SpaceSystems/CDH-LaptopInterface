@@ -82,7 +82,7 @@ START_INIT:
 
 #if !PROGRAM_SELECT
     Serial.print("*Transceriver mode!\n");
-    Serial.print("\n**** STARTING GROUNDSTATION INIT ****\n");
+    Serial.print("*Strating groundstation init!\n");
     /* Configure Pins */
     pinMode(pin_RST_TRX, OUTPUT);
     pinMode(pin_SS, OUTPUT);
@@ -100,7 +100,7 @@ START_INIT:
     setup_fake_tc();
     transmit_packet();
     delay(25);
-    Serial.print("\n**** FINISHING GROUNDSTATION INIT ****\n");
+    Serial.print("*Finishing groundstation init!\n");
 #endif
 
 }

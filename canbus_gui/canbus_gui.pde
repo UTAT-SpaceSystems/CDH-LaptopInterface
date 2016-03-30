@@ -16,6 +16,8 @@
 *   02/25/16      Steven Yin          perfection of UI
 *
 *   03/21/16      Steven Yin          Updated housekeeping definitions
+*
+*   03/29/16      Steven Yin          perfection of UI(work in progress)
 */
 
 
@@ -64,8 +66,7 @@ void setup()
     }
   
     // Loading assets
-    mono = loadFont("FreeSans-48.vlw");
-    bold = loadFont("FreeSansBold-48.vlw");
+    sourcepro = loadFont("SourceSansPro-Semibold-48.vlw");
     title = loadFont("FreeSansBoldOblique-48.vlw");
     crest = loadImage("crest.png");
     
@@ -221,7 +222,7 @@ void draw()
                     
                     // Write the data in a log file
                     time = new Date();
-                    log.println("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1]);
+                    log.println("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            CAN_DATA: " + frame[1]);
                 
                     int sensor_id = Integer.parseInt(frame[1].substring(4,6), 16);
                     
@@ -435,18 +436,18 @@ void draw()
                     if (can_stream.size() < MESSAGE_NUM)
                     {
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "             TRANS   " + "            DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) +  "            DATA: " + frame[1]);
                     }
                     else
                     {
                         can_stream.remove();
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "             TRANS   " + "            DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) +  "            DATA: " + frame[1]);
                     }
                     
                     // Write the data in a log file
                     time = new Date();
-                    log.println("TIME: " + time_f.format(time) + "             TRANS   " + "            DATA: " + frame[1]);
+                    log.println("TIME: " + time_f.format(time) +  "            TRANS_DATA: " + frame[1]);
                 
                     int sensor_id = Integer.parseInt(frame[1].substring(0,2), 16);
                     
@@ -710,18 +711,33 @@ void render_graphics()
     
     //Rendering mode
     fill(white);
-    textSize(20);
+    textFont(title, 20);
     if(mode == 0)
         text("CAN_MODE",displayWidth - 165, (HEADER_HEIGHT / 2) - 30);
     else if(mode == 1)
         text("TRANS_MODE",displayWidth - 165, (HEADER_HEIGHT / 2) - 30);
+    
+    // Header seperation lines
+    fill(white);
+    rect(displayWidth - 400, HEADER_HEIGHT, 4, 250);
+    rect(0, HEADER_HEIGHT + 125, displayWidth, 4);
+    rect(0, HEADER_HEIGHT, displayWidth, 4);
+    rect(0, 370, displayWidth, 4);
         
     //Rendering status
     textSize(20);
     text("Arduino Status:", 100, HEADER_HEIGHT + 50);
-    text("CAN Status:", 300, HEADER_HEIGHT + 50);
-    text("MSG Status:", 500, HEADER_HEIGHT + 50);
-    
+    if(mode == 0)
+    {
+        text("CAN Status:", 400, HEADER_HEIGHT + 50);
+        text("MSG Status:", 700, HEADER_HEIGHT + 50);
+    }
+    else 
+    {
+        text("TRANS Status:", 400, HEADER_HEIGHT + 50);
+        text("PACKET Status:", 700, HEADER_HEIGHT + 50);
+    }
+
     // Arduino status
     switch(arduino_status)
     {
@@ -757,7 +773,7 @@ void render_graphics()
         break;
     }
     
-    text(can_status_message, 300, HEADER_HEIGHT + 100);
+    text(can_status_message, 400, HEADER_HEIGHT + 100);
     
     // Message send status
     switch(msg_status)
@@ -778,12 +794,12 @@ void render_graphics()
         break;
     }
     
-    text(msg_status_message, 500, HEADER_HEIGHT + 100);
+    text(msg_status_message, 700, HEADER_HEIGHT + 100);
     
     resetFormat();
     
     //Send message button
-    if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT + 10 && mouseY < HEADER_HEIGHT + 50)
+    if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
     {
        fill(white);
     }
@@ -792,9 +808,9 @@ void render_graphics()
        fill(grey);
     }
     
-    rect(displayWidth - 170, HEADER_HEIGHT + 10, 120, 40, 8);
+    rect(displayWidth - 170, HEADER_HEIGHT + 50, 120, 40, 8);
     fill(black);
-    text("SEND MSG", displayWidth - 155, HEADER_HEIGHT + 35);
+    text("SEND MSG", displayWidth - 155, HEADER_HEIGHT + 75);
     
     resetFormat();
     
@@ -816,14 +832,22 @@ void render_graphics()
     resetFormat();
     
     text("DATA STREAMS", (displayWidth / 2) - 55, 400);
-    rect(0, 419, displayWidth, 4);
     rect(displayWidth / 4, 419, 4, displayHeight - 419);
     rect(displayWidth / 2, 419, 4, displayHeight - 419);
+    rect(0, 419, displayWidth, 4);
     
     resetFormat();
     text("ARDUINO", displayWidth / 8 - 20, 445);
-    text("SENT MESSAGES", displayWidth/2 - (displayWidth / 8) - 60, 445);
-    text("CAN BUS", 3*displayWidth/4 - 60, 445);
+    if(mode == 0)
+    {
+        text("SENT MESSAGES", displayWidth/2 - (displayWidth / 8) - 60, 445);
+        text("CAN BUS", 3*displayWidth/4 - 60, 445);
+    }
+    else
+    {
+        text("SENT COMMAND", displayWidth/2 - (displayWidth / 8) - 60, 445);
+        text("TRANSCEIVER", 3*displayWidth/4 - 60, 445);
+    }
     rect(0, 455, displayWidth, 4);
     
     fill(yellow);
@@ -837,7 +861,7 @@ void mouseClicked()
 {
     if(!isPlot)
     {
-        if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT + 10 && mouseY < HEADER_HEIGHT + 50)
+        if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
         {
            String out_id = JOptionPane.showInputDialog("Enter the mailbox ID (Integar): ");
            String out_data = JOptionPane.showInputDialog("Enter an 8-byte hexadecimal message (format: FFFFFFFFFFFFFFFF): ");
@@ -932,7 +956,7 @@ void resetFormat()
 {
     fill(white);
     stroke(black);
-    textFont(mono, 16);
+    textFont(sourcepro, 16);
 }
 
 /*

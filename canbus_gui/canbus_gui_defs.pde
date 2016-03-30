@@ -40,7 +40,7 @@ DisposeHandler dh;
 
 // Assets
 PImage crest;
-PFont mono, bold, title;
+PFont sourcepro, title;
 
 // GUI Constants
 final int HEADER_HEIGHT = 120;

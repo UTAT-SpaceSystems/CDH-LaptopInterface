@@ -28,7 +28,7 @@ void render_plot()
     
     //Rendering mode
     fill(white);
-    textSize(20);
+    textFont(title, 20);
     if(mode == 0)
         text("CAN_MODE",displayWidth - 165, (HEADER_HEIGHT / 2) - 30);
     else if(mode == 1)
@@ -141,8 +141,8 @@ void render_plot()
     
     // Header seperation lines
     fill(white);
-    rect(0, HEADER_HEIGHT, displayWidth, 6);
-    rect(0, HEADER_HEIGHT + 80, displayWidth, 6);
+    rect(0, HEADER_HEIGHT, displayWidth, 4);
+    rect(0, HEADER_HEIGHT + 80, displayWidth, 4);
     
     for(int i = 0; i < full_sensor_list.get(my_plot.value()).sensor_list.size(); i++)
     {
