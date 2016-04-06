@@ -158,7 +158,7 @@ void draw()
     if (!in_string.equals("#\n") && !(in_string.charAt(0) == '^') && !(in_string.charAt(0) == '~'))
     {
         //Status confirmation
-        if(in_string.charAt(0) == '@')
+        if (in_string.charAt(0) == '@')
         {
             if (in_string.equals("@ARDUINO_OK\n"))
             {
@@ -179,6 +179,14 @@ void draw()
             else if (in_string.equals("@MSG_ERR\n"))
             {
                 msg_status = 2;
+            }
+            else if (in_string.equals("@TRANS_OK\n"))
+            {
+                trans_status = 1;
+            }
+            else if (in_string.equals("@PACKET_OK\n"))
+            {
+                packet_status = 1;
             }
         }
         else if (in_string.charAt(0) == '*') // A message from Arduino
@@ -617,17 +625,19 @@ void draw()
                         }
                         case ABS_TIME_D - 7:
                         {
+                            // day = Integer.parseInt(frame[1].substring(2,6), 16);
                             break;
                         }
                         case ABS_TIME_H - 7:
                         {
+                            // hour = Integer.parseInt(frame[1].substring(2,6), 16);
                             break;
                         }
                         case ABS_TIME_M - 7:
                         {
+                            // minute = Integer.parseInt(frame[1].substring(2,6), 16);
                             break;
                         }
-                        /* TODO: CASE FOR THE ABS_TIME*/
                     }
                 }
             }
@@ -719,7 +729,7 @@ void render_graphics()
     
     // Header seperation lines
     fill(white);
-    rect(displayWidth - 400, HEADER_HEIGHT, 4, 250);
+    rect(displayWidth / 2, HEADER_HEIGHT, 4, 250);
     rect(0, HEADER_HEIGHT + 125, displayWidth, 4);
     rect(0, HEADER_HEIGHT, displayWidth, 4);
     rect(0, 370, displayWidth, 4);
@@ -754,47 +764,116 @@ void render_graphics()
     
     text(arduino_status_message, 100, HEADER_HEIGHT + 100);
     
-    // CAN bus status
-    switch(can_status)
+    // CAN bus/TRANS status
+    if(mode == 0)
     {
-        case 0:
-        fill(grey);
-        can_status_message = "NA";
-        break;
-        
-        case 1:
-        fill(green);
-        can_status_message = "OK";
-        break;
-        
-        case 2:
-        fill(red);
-        can_status_message = "ERROR";
-        break;
+        switch(can_status)
+        {
+            case 0:
+            fill(grey);
+            can_status_message = "NA";
+            break;
+            
+            case 1:
+            fill(green);
+            can_status_message = "OK";
+            break;
+            
+            case 2:
+            fill(red);
+            can_status_message = "ERROR";
+            break;
+        }
+        text(can_status_message, 400, HEADER_HEIGHT + 100);
+    }
+    else
+    {
+        switch(trans_status)
+        {
+            case 0:
+            fill(grey);
+            trans_status_message = "NA";
+            break;
+            
+            case 1:
+            fill(green);
+            trans_status_message = "OK";
+            break;
+        }
+        text(trans_status_message, 400, HEADER_HEIGHT + 100);
     }
     
-    text(can_status_message, 400, HEADER_HEIGHT + 100);
-    
-    // Message send status
-    switch(msg_status)
+    // Message send/PACKET status
+    if(mode == 0)
     {
-        case 0:
-        fill(grey);
-        msg_status_message = "NA";
-        break;
-        
-        case 1:
-        fill(green);
-        msg_status_message = "OK";
-        break;
-        
-        case 2:
-        fill(red);
-        msg_status_message = "ERROR";
-        break;
+        switch(msg_status)
+        {
+            case 0:
+            fill(grey);
+            msg_status_message = "NA";
+            break;
+            
+            case 1:
+            fill(green);
+            msg_status_message = "OK";
+            break;
+            
+            case 2:
+            fill(red);
+            msg_status_message = "ERROR";
+            break;
+        }
+        text(msg_status_message, 700, HEADER_HEIGHT + 100);
+    }
+    else
+    {
+        switch(packet_status)
+        {
+            case 0:
+            fill(grey);
+            packet_status_message = "NA";
+            break;
+            
+            case 1:
+            fill(green);
+            packet_status_message = "OK";
+            break;
+            
+            case 2:
+            fill(red);
+            packet_status_message = "ERROR";
+            break;
+        }
+        text(packet_status_message, 700, HEADER_HEIGHT + 100);
     }
     
-    text(msg_status_message, 700, HEADER_HEIGHT + 100);
+    //Rendering time
+    fill(white);
+    text("Computer Time:", 100, HEADER_HEIGHT + 175);
+    time = new Date();
+    text(time_f.format(time), 100, HEADER_HEIGHT + 225);
+    
+    fill(white);
+    text("SAT Time:", 400, HEADER_HEIGHT + 175);
+    if(mode == 0)
+    {
+        fill(grey);
+        text("NA", 400, HEADER_HEIGHT + 225);
+    }
+    else 
+    {
+        if(!is_sat_time_avail)
+        {
+            fill(grey);
+            text("NA", 400, HEADER_HEIGHT + 225);
+        }
+        else
+        {
+            // TODO
+            fill(white);
+            //text(sat_time, 400, HEADER_HEIGHT + 225);
+        }
+    }
     
     resetFormat();
     
@@ -863,29 +942,35 @@ void mouseClicked()
     {
         if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
         {
-           String out_id = JOptionPane.showInputDialog("Enter the mailbox ID (Integar): ");
-           String out_data = JOptionPane.showInputDialog("Enter an 8-byte hexadecimal message (format: FFFFFFFFFFFFFFFF): ");
-            
-           // Hat indicates message coming from PC unlike $ for messages being read from bus
-           // Nothing is sent by the arduino until it reads a message started by ^
-           String message = "";
-            
-           if (out_id != null && out_data != null)
-           {
-               message = "^" + out_id  + out_data + "\n";
-           }
-            
-           if (outgoing_message_stream.size() < MESSAGE_NUM)
-           {
-               outgoing_message_stream.add("MOB_ID: " + out_id + "        DATA: " + out_data);
-           }
-           else
-           {
-               outgoing_message_stream.remove();
-               outgoing_message_stream.add("MOB_ID: " +  out_id + "        DATA: " + out_data);
-           }
-            
-           arduino.write(message);
+            if(mode == 0)
+            {
+                String out_id = JOptionPane.showInputDialog("Enter the mailbox ID (Integar): ");
+                String out_data = JOptionPane.showInputDialog("Enter an 8-byte hexadecimal message (format: FFFFFFFFFFFFFFFF): ");
+
+                // Hat indicates message coming from PC unlike $ for messages being read from bus
+                // Nothing is sent by the arduino until it reads a message started by ^
+                String message = "";
+
+                if (out_id != null && out_data != null)
+                {
+                    message = "^" + out_id  + out_data + "\n";
+                }
+
+                if (outgoing_message_stream.size() < MESSAGE_NUM)
+                {
+                    outgoing_message_stream.add("MOB_ID: " + out_id + "        DATA: " + out_data);
+                }
+                else
+                {
+                    outgoing_message_stream.remove();
+                    outgoing_message_stream.add("MOB_ID: " +  out_id + "        DATA: " + out_data);
+                }
+                arduino.write(message);
+            }
+            else 
+            {
+                // TODO    
+            }
         }
         if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT - 50 && mouseY < HEADER_HEIGHT - 10)
         {

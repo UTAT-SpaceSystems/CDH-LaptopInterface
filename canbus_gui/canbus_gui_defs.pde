@@ -23,7 +23,8 @@ int mode = 1;
 
 // The time object
 Date time;
-SimpleDateFormat time_f = new SimpleDateFormat("hh"+":"+"mm"+":"+"ss");
+SimpleDateFormat time_f = new SimpleDateFormat("kk"+":"+"mm"+":"+"ss");
+SimpleDateFormat sat_time_f = new SimpleDateFormat("dd"+":"+"kk"+":"+"mm");
 
 // COM port result
 String port_selection;
@@ -92,15 +93,22 @@ String arduino_status_message;
 Queue arduino_stream;
 
 String msg_status_message;
+String packet_status_message;
 Queue outgoing_message_stream;
 
 String can_status_message;
+String trans_status_message;
 Queue can_stream;
 
 // Staus variables
 int arduino_status = 0;
 int can_status = 0;
+int trans_status = 0;
 int msg_status = 0;
+int packet_status = 0;
+
+// Sat time available
+boolean is_sat_time_avail = false;
 
 // Sensor Groups
 SensorGroup temp = new SensorGroup(SensorType.tempreture);

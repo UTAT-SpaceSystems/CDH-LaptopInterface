@@ -101,6 +101,7 @@ START_INIT:
     transmit_packet();
     delay(25);
     Serial.print("*Finishing groundstation init!\n");
+    Serial.print("@TRANS_OK\n");
 #endif
 
 }
@@ -290,9 +291,12 @@ void handleCommand(String in)
             request_sensor_data();
             break;
         }
-        case GET_TRANS_DATA:
+        case GET_HK_DATA:
         {
-            get_trans_data();
+            if(is_hk_ready)
+            {
+                get_hk_data();
+            }
             break;
         }
     }
@@ -319,7 +323,7 @@ void request_sensor_data()
 /**
 * Get data from hk_array[] and send it to the laptop interface
 */
-void get_trans_data()
+void get_hk_data()
 {
     // TODO: ABS_TIME_D ABS_TIME_H ABS_TIME_M
     uint32_t buff = 0;
@@ -518,9 +522,9 @@ void transceiver_run(void)
             delay(200);      // Relic of working code.
             if(rx_length > REAL_PACKET_LENGTH)
             {
-                Serial.print("\n*START PACKET\n");
+                Serial.print("*START PACKET\n");
                 load_packet();
-                Serial.print("\n*END PACKET\n");
+                Serial.print("*END PACKET\n");
                 /* We have a packet */
                 if(rx_length <= (rxLast - rxFirst + 1))     // Length = data + address byte + length byte
                 {
@@ -528,10 +532,11 @@ void transceiver_run(void)
                     rx_length = 0;
                     if(!check)                                  // Packet was accepted and stored internally.
                     {
-                        Serial.print("\n*GOOD PACKET\n");
+                        Serial.print("*GOOD PACKET\n");
                         prepareAck();
                         decode_telemetry();
                         cmd_str(STX);
+                        Serial.print("@PACKET_OK\n");
                         return;  
                     }
 
@@ -544,7 +549,7 @@ void transceiver_run(void)
                 /* We have an acknowledgment */
                 if(tm_to_decode[1] == 0x41 && tm_to_decode[2] == 0x43 && tm_to_decode[3] == 0x4B) // Received proper acknowledgment.
                 {
-                    Serial.print("\n*RECEIVED ACK\n");
+                    Serial.print("*RECEIVED ACK\n");
                     lastAck = millis();
                     lastTransmit = millis();
                     //if(last_tx_packet_height)
@@ -580,7 +585,7 @@ void transceiver_run(void)
     }
     if(millis() - lastTransmit > TRANSMIT_TIMEOUT)  // Transmit packet (if one is available)
     {
-        Serial.print("\n*SENDING PACKET\n");
+        Serial.print("*SENDING PACKET\n");
         cmd_str(SIDLE);
         cmd_str(SFRX);
         cmd_str(SFTX);
@@ -1080,7 +1085,7 @@ int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte s
     uint32_t new_time = 0, last_time = 0;
     if(packet_length != PACKET_LENGTH)
     {
-        Serial.println("INCORRECT PACKET_LENGTH");      // TC verify acceptance report, failure, 1 == invalid packet length
+        Serial.println("*INCORRECT PACKET_LENGTH\n");      // TC verify acceptance report, failure, 1 == invalid packet length
         return -1;
     }
     // if(pec0 != pec1)
@@ -1090,14 +1095,14 @@ int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte s
     // }
     if((service_type != 1) && (service_type != 3) && (service_type != 5) && (service_type != 6) && (service_type != 9) && (service_type != 69))
     {
-        Serial.println("INVALID SERVICETYPE");
+        Serial.println("*INVALID SERVICETYPE\n");
         return -1;
     }
     if(service_type == TC_VERIFY_SERVICE)
     {
         if(service_sub_type != 1 && service_sub_type != 2 && service_sub_type != 7 && service_sub_type != 8)
         {
-            Serial.println("TCV: INCORRECT SERVICESUBTYPE");
+            Serial.println("*TCV: INCORRECT SERVICESUBTYPE\n");
             return -1;
         }
     }
@@ -1105,13 +1110,13 @@ int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte s
     {
         if((service_sub_type != 10) && (service_sub_type != 12) && (service_sub_type != 25) && (service_sub_type != 26))
         {
-            Serial.println("HK: INCORRECT SERVICESUBTYPE");
+            Serial.println("*HK: INCORRECT SERVICESUBTYPE\n");
             return -1;
         }
         if(apid != HK_TASK_ID)
         {
-            Serial.print("HK: INCORRECT APID: ");
-            Serial.println(apid);
+            Serial.print("*HK: INCORRECT APID: ");
+            Serial.print(apid + "\n");
             return -1;
         }
     }
@@ -1119,12 +1124,12 @@ int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte s
     {
         if((service_sub_type != 6) && (service_sub_type != 10))
         {
-            Serial.println("MEM: INCORRECT SERVICESUBTYPE");
+            Serial.println("*MEM: INCORRECT SERVICESUBTYPE\n");
             return -1;
         }
         if(apid != MEM_GROUND_ID)
         {
-            Serial.println("MEM: INCORRECT APID");
+            Serial.println("*MEM: INCORRECT APID\n");
             return -1;
         }
         address =  ((uint32_t)tm_to_decode[137]) << 24;
@@ -1133,21 +1138,21 @@ int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte s
         address += (uint32_t)tm_to_decode[134];
         
         if(tm_to_decode[138] > 1)                                           // Invalid memory ID.
-            Serial.println("MEM: INCORRECT MEMID");
+            Serial.println("*MEM: INCORRECT MEMID\n");
         if((tm_to_decode[138] == 1) && (address > 0xFFFFF))             // Invalid memory address (too high)
-            Serial.println("MEM: INCORRECT ADDRESS");        
+            Serial.println("*MEM: INCORRECT ADDRESS\n");        
     }
     
     if(service_type == TIME_SERVICE)
     {
         if(service_sub_type != 2)
         {
-            Serial.println("TIME: INCORRECT SERVICESUBTYPE");
+            Serial.println("*TIME: INCORRECT SERVICESUBTYPE\n");
             return -1;          
         }
         if(apid != TIME_GROUND_ID)
         {
-            Serial.println("TIME: INCORRECT APID");
+            Serial.println("*TIME: INCORRECT APID\n");
             return -1;
         }
     }
@@ -1156,7 +1161,7 @@ int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte s
     {
         if(service_sub_type != 4)
         {
-            Serial.println("KSERV: INCORRECT SERVICESUBTYPE");
+            Serial.println("*KSERV: INCORRECT SERVICESUBTYPE\n");
             return -1;
         }
     }
@@ -1165,21 +1170,21 @@ int verify_telemetry(byte apid, byte packet_length, byte pec0, byte pec1, byte s
     // }
     if(version != 0)
     {
-        Serial.println("INCORRECT VERSION");
+        Serial.println("*INCORRECT VERSION\n");
         return -1;
     }
     if(ccsds_flag != 1)
     {
-        Serial.println("INCORRECT CCSDS FLAG");
+        Serial.println("*INCORRECT CCSDS FLAG\n");
         return -1;
     }
     if(packet_version != 1)
     {
-        Serial.println("INCORRECT PACKET VERSION");
+        Serial.println("*INCORRECT PACKET VERSION\n");
         return -1;
     }
     /* The telecommand packet is good to be decoded further!        */
-    Serial.println("*VERIFICATION PASSED");
+    Serial.println("*VERIFICATION PASSED\n");
     return 1;
 }
 
@@ -1217,7 +1222,8 @@ void decode_housekeeping(void)
             {
                 hk_array[i] = tm_to_decode[i + 75];
             }
-            Serial.println("*HOUSEKEEPING UPDATED");
+            Serial.println("*HOUSEKEEPING UPDATED\n");
+            is_hk_ready = true;
             break;
         default:
             break;

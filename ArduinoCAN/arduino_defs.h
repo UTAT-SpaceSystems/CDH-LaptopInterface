@@ -196,10 +196,13 @@ byte tm_to_downlink[PACKET_LENGTH];
 
 // Commands DEFINE
 #define REQ_SENSOR_DATA   0x00
-#define GET_TRANS_DATA    0x01
+#define GET_HK_DATA    0x01
 
 // BIG_ARRAY
 uint8_t hk_array[76];
+
+// If there is data in hk_array
+bool is_hk_ready = false;
 
 // Commands Flags
 uint8_t toggle_values = 0;
