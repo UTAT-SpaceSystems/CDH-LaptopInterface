@@ -18,8 +18,8 @@ import java.util.Queue;
 import java.util.LinkedList;
 import processing.serial.*;
 
-// Working mode
-int mode = 1;
+// Working mode CAN=0 TRANS=1
+int mode = 0;
 
 // The time object
 Date time;
@@ -254,3 +254,7 @@ final int MPPTY = 0x1D;
 final int ABS_TIME_D = 0x1E;
 final int ABS_TIME_H = 0x1F;
 final int ABS_TIME_M = 0x20;
+
+// CAN mailbox list
+String can_mb_list[] = {"CAN0_MB0", "CAN0_MB1", "CAN0_MB2", "CAN0_MB3", "CAN0_MB4", "CAN0_MB5", "CAN0_MB6", "CAN0_MB7",
+                        "CAN1_MB0", "CAN1_MB1", "CAN1_MB2", "CAN1_MB3", "CAN1_MB4", "CAN1_MB5", "CAN1_MB6", "CAN1_MB7"};

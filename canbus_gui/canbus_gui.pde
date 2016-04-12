@@ -192,16 +192,16 @@ void draw()
         else if (in_string.charAt(0) == '*') // A message from Arduino
         {
             if (arduino_stream.size() < MESSAGE_NUM)
-                {
-                    time = new Date();
-                    arduino_stream.add("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
-                }
-                else
-                {
-                    arduino_stream.remove();
-                    time = new Date();
-                    arduino_stream.add("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
-                }
+            {
+                time = new Date();
+                arduino_stream.add("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
+            }
+            else
+            {
+                arduino_stream.remove();
+                time = new Date();
+                arduino_stream.add("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
+            }
                 
             // Write the data in a log file
             time = new Date();

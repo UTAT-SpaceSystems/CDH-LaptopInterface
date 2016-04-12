@@ -200,9 +200,11 @@ byte tm_to_downlink[PACKET_LENGTH];
 
 // BIG_ARRAY
 uint8_t hk_array[76];
+uint8_t sci_array[53];
 
 // If there is data in hk_array
 bool is_hk_ready = false;
+bool is_sci_ready = false;
 
 // Commands Flags
 uint8_t toggle_values = 0;

@@ -57,7 +57,9 @@ QueueList <packet> packetsFifo;
 void setup()
 {
     Serial.begin(9600);
+#if !PROGRAM_SELECT
     packetsFifo.setPrinter(Serial);
+#endif
     establishContact();
     
 #if PROGRAM_SELECT
@@ -135,6 +137,7 @@ void loop()
 
 #if !PROGRAM_SELECT
     transceiver_run();
+    parseTransMessage();
 #endif
 
     // Checks for GUI serial inputs
@@ -146,21 +149,18 @@ void loop()
             handleCommand(serial_message);
         }
         #if PROGRAM_SELECT
-        digitalWrite(LED2, HIGH);
         else if(serial_message[0] == '^')
         {
+            digitalWrite(LED2, HIGH);
             Frame message_out;
             message_out = parseMessageFromSerial(serial_message);
 
             if (message_out.is_ok)
                 can_send_queue.push(message_out);
+            digitalWrite(LED2, LOW);
         }
-        run_counter = 0;
-        digitalWrite(LED2, LOW);
         #endif
     }
-    
-    parseTransMessage();
 }
 
 /**
@@ -316,7 +316,7 @@ void request_sensor_data()
     for(int i = 0x01; i <= 0x1B; i++)
     {
         message_out.data[4] = i;
-        //can_send_queue.push(message_out);
+        can_send_queue.push(message_out);
     }
     Serial.print("*Sensor data requested!\n");
 }
@@ -325,7 +325,6 @@ void request_sensor_data()
 */
 void get_hk_data()
 {
-    // TODO: ABS_TIME_D ABS_TIME_H ABS_TIME_M
     uint32_t buff = 0;
     for(int i = 53; i > 4; i -= 2)
     {
@@ -439,7 +438,7 @@ boolean string_to_hex(String in, byte& out)
 }
 
 //************************************************************ FUNCTION DECLARATION**********************************************//
-
+#if !PROGRAM_SELECT
 void transceiver_initialize(void)
 {
     set_CSn(0);
@@ -1282,3 +1281,4 @@ void decode_fdir(void)
     // Nothing yet.
     return;
 }
+#endif
