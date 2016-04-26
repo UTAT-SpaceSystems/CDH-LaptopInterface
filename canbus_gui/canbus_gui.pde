@@ -877,6 +877,38 @@ void render_graphics()
     
     resetFormat();
     
+    //Set message button
+    if (mouseX > displayWidth / 2 + 50 && mouseX < displayWidth / 2 + 170 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
+    {
+       fill(white);
+    }
+    else
+    {
+       fill(grey);
+    }
+    
+    rect(displayWidth / 2 + 50, HEADER_HEIGHT + 50, 120, 40, 8);
+    fill(black);
+    text("SET MSG", displayWidth / 2 + 80, HEADER_HEIGHT + 75);
+    
+    resetFormat();
+    
+    //Clear message button
+    if (mouseX > displayWidth - 340 && mouseX < displayWidth - 220 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
+    {
+       fill(white);
+    }
+    else
+    {
+       fill(grey);
+    }
+    
+    rect(displayWidth - 340, HEADER_HEIGHT + 50, 120, 40, 8);
+    fill(black);
+    text("CLEAR MSG", displayWidth - 320, HEADER_HEIGHT + 75);
+    
+    resetFormat();
+    
     //Send message button
     if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
     {
@@ -889,8 +921,24 @@ void render_graphics()
     
     rect(displayWidth - 170, HEADER_HEIGHT + 50, 120, 40, 8);
     fill(black);
-    text("SEND MSG", displayWidth - 155, HEADER_HEIGHT + 75);
+    text("SEND MSG", displayWidth - 145, HEADER_HEIGHT + 75);
     
+    resetFormat();
+    
+    // Current SEND CAN MESSAGE BUFFER
+    textSize(20);
+    text("CAN SEND MESSAGE BUFFER:", displayWidth / 2 + 220, HEADER_HEIGHT + 50);
+    if(is_can_out_avail)
+    {
+        textSize(16);
+        text("MB:" + can_out_id + "   MESSAGE:" + can_out_data, displayWidth / 2 + 220, HEADER_HEIGHT + 100);
+    }
+    else
+    {
+        textSize(16);
+        fill(grey);
+        text("NA", displayWidth / 2 + 220, HEADER_HEIGHT + 100);
+    }
     resetFormat();
     
     // PLOT_DATA button
@@ -904,7 +952,7 @@ void render_graphics()
     }
     rect(displayWidth - 170, HEADER_HEIGHT - 50, 120, 40, 8);
     fill(black);
-    text("PLOT DATA", displayWidth - 155, HEADER_HEIGHT - 25);
+    text("PLOT DATA", displayWidth - 150, HEADER_HEIGHT - 25);
     
     fill(blue);
     rect(0, 374, displayWidth, 45);
@@ -940,39 +988,65 @@ void mouseClicked()
 {
     if(!isPlot)
     {
-        if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
+        if (mouseX > displayWidth / 2 + 50 && mouseX < displayWidth / 2 + 170 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
         {
             if(mode == 0)
             {
-                String out_id = JOptionPane.showInputDialog("Enter the mailbox ID (Integar): ");
-                String out_data = JOptionPane.showInputDialog("Enter an 8-byte hexadecimal message (format: FFFFFFFFFFFFFFFF): ");
+                can_out_id = JOptionPane.showInputDialog("Enter the mailbox ID (Integar): ");
+                can_out_data = JOptionPane.showInputDialog("Enter an 8-byte hexadecimal message (format: FFFFFFFFFFFFFFFF): ");
 
-                // Hat indicates message coming from PC unlike $ for messages being read from bus
-                // Nothing is sent by the arduino until it reads a message started by ^
-                String message = "";
+                can_out_message = "";
 
-                if (out_id != null && out_data != null)
+                if (can_out_id != null && can_out_data != null)
                 {
-                    message = "^" + out_id  + out_data + "\n";
+                    can_out_message = "^" + can_out_id  + can_out_data + "\n";
+                    is_can_out_avail = true;
                 }
-
-                if (outgoing_message_stream.size() < MESSAGE_NUM)
-                {
-                    outgoing_message_stream.add("MOB_ID: " + out_id + "        DATA: " + out_data);
-                }
-                else
-                {
-                    outgoing_message_stream.remove();
-                    outgoing_message_stream.add("MOB_ID: " +  out_id + "        DATA: " + out_data);
-                }
-                arduino.write(message);
             }
             else 
             {
                 // TODO    
             }
         }
-        if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT - 50 && mouseY < HEADER_HEIGHT - 10)
+        else if (mouseX > displayWidth - 340 && mouseX < displayWidth - 220 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
+        {
+            if(mode == 0)
+            {
+                is_can_out_avail = false;
+            }
+            else
+            {
+                // TODO
+            }
+        }
+        else if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT + 50 && mouseY < HEADER_HEIGHT + 90)
+        {
+            if(mode == 0)
+            {
+                if (is_can_out_avail)
+                {
+                    if (outgoing_message_stream.size() < MESSAGE_NUM)
+                    {
+                        outgoing_message_stream.add("MOB_ID: " + out_id + "        DATA: " + out_data);
+                    }
+                    else
+                    {
+                        outgoing_message_stream.remove();
+                        outgoing_message_stream.add("MOB_ID: " +  out_id + "        DATA: " + out_data);
+                    }
+                    arduino.write(can_out_message);
+                }
+                else
+                {
+                    JOptionPane.showMessageDialog(null,"Please set your CAN message first.","UTAT",JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            else
+            {
+                // TODO
+            }
+        }
+        else if (mouseX > displayWidth - 170 && mouseX < displayWidth - 50 && mouseY > HEADER_HEIGHT - 50 && mouseY < HEADER_HEIGHT - 10)
         {
              isPlot = true;
         }
