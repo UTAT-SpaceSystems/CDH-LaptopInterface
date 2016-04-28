@@ -18,8 +18,8 @@ import java.util.Queue;
 import java.util.LinkedList;
 import processing.serial.*;
 
-// Working mode
-int mode = 1;
+// Working mode CAN=0 TRANS=1
+int mode = 0;
 
 // The time object
 Date time;
@@ -99,6 +99,12 @@ Queue outgoing_message_stream;
 String can_status_message;
 String trans_status_message;
 Queue can_stream;
+
+// CAN send out buffers
+String can_out_id;
+String can_out_data;
+String can_out_message;
+boolean is_can_out_avail = false;
 
 // Staus variables
 int arduino_status = 0;
