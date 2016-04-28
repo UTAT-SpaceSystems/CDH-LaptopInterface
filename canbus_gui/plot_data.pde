@@ -203,7 +203,7 @@ void draw_plot()
             float dy =  (displayHeight - 400) / (full_sensor_list.get(my_plot.value()).boundary_high - full_sensor_list.get(my_plot.value()).boundary_low);
             for(int j = 0; j < full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_data.size() - 1; j++)
             {
-                line(300 + j * DELTA_X, displayHeight - 150 - (full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_data.get(j) * dy), 300 + (j + 1) * DELTA_X, displayHeight - 150 - full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_data.get(j + 1) * dy);
+                line(300 + j * DELTA_X, HEADER_HEIGHT + displayHeight - 250 - (full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_data.get(j) * dy), 300 + (j + 1) * DELTA_X, HEADER_HEIGHT + displayHeight - 250 - full_sensor_list.get(my_plot.value()).sensor_list.get(i).sensor_data.get(j + 1) * dy);
             }
             resetFormat();
         }
@@ -247,4 +247,206 @@ void draw_label(float y_interval)
         text(full_sensor_list.get(my_plot.value()).boundary_low + (GRID_Y - i) * ((full_sensor_list.get(my_plot.value()).boundary_high - full_sensor_list.get(my_plot.value()).boundary_low) / GRID_Y), 200, HEADER_HEIGHT + 150 + i * y_interval);
     }
     resetFormat();
+}
+
+void update_hk_data()
+{
+    for(int sensor_id = 0x01; sensor_id <= 0x1B; sensor_id++)
+    {
+        switch(sensor_id)
+        {
+            // Example case
+            /*
+            case SENSOR_NAME:
+            // If no conversion on senssor data is needed otherwise convert data to integer
+                full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
+            */
+            case PANELX_V:
+            {
+                full_sensor_list.get(1).sensor_list.get(0).sensor_avail = true;
+                full_sensor_list.get(1).sensor_list.get(0).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(1).sensor_list.get(0).sensor_is_updated = true;
+                break;
+            }
+            case PANELX_I:
+            {
+                full_sensor_list.get(2).sensor_list.get(0).sensor_avail = true;
+                full_sensor_list.get(2).sensor_list.get(0).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(2).sensor_list.get(0).sensor_is_updated = true;
+                break;
+            }
+            case PANELY_V:
+            {
+                full_sensor_list.get(1).sensor_list.get(1).sensor_avail = true;
+                full_sensor_list.get(1).sensor_list.get(1).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(1).sensor_list.get(1).sensor_is_updated = true;
+                break;
+            }
+            case PANELY_I:
+            {
+                full_sensor_list.get(2).sensor_list.get(1).sensor_avail = true;
+                full_sensor_list.get(2).sensor_list.get(1).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(2).sensor_list.get(1).sensor_is_updated = true;
+                break;
+            }
+            case BATTM_V:
+            {
+                full_sensor_list.get(1).sensor_list.get(2).sensor_avail = true;
+                full_sensor_list.get(1).sensor_list.get(2).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(1).sensor_list.get(2).sensor_is_updated = true;
+                break;
+            }
+            case BATT_V:
+            {
+                full_sensor_list.get(1).sensor_list.get(3).sensor_avail = true;
+                full_sensor_list.get(1).sensor_list.get(3).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(1).sensor_list.get(3).sensor_is_updated = true;
+                break;
+            }
+            case BATTIN_I:
+            {
+                full_sensor_list.get(2).sensor_list.get(2).sensor_avail = true;
+                full_sensor_list.get(2).sensor_list.get(2).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(2).sensor_list.get(2).sensor_is_updated = true;
+                break;
+            }
+            case BATTOUT_I:
+            {
+                full_sensor_list.get(2).sensor_list.get(3).sensor_avail = true;
+                full_sensor_list.get(2).sensor_list.get(3).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(2).sensor_list.get(3).sensor_is_updated = true;
+                break;
+            }
+            case BATT_TEMP:
+            {
+                full_sensor_list.get(0).sensor_list.get(0).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(0).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(0).sensor_is_updated = true;
+                break;
+            }
+            case EPS_TEMP:
+            {
+                full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
+                break;
+            }
+            case COMS_V:
+            {
+                full_sensor_list.get(1).sensor_list.get(4).sensor_avail = true;
+                full_sensor_list.get(1).sensor_list.get(4).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(1).sensor_list.get(4).sensor_is_updated = true;
+                break;
+            }
+            case COMS_I:
+            {
+                full_sensor_list.get(2).sensor_list.get(4).sensor_avail = true;
+                full_sensor_list.get(2).sensor_list.get(4).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(2).sensor_list.get(4).sensor_is_updated = true;
+                break;
+            }
+            case PAY_V:
+            {
+                full_sensor_list.get(1).sensor_list.get(5).sensor_avail = true;
+                full_sensor_list.get(1).sensor_list.get(5).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(1).sensor_list.get(5).sensor_is_updated = true;
+                break;
+            }
+            case PAY_I:
+            {
+                full_sensor_list.get(2).sensor_list.get(5).sensor_avail = true;
+                full_sensor_list.get(2).sensor_list.get(5).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(2).sensor_list.get(5).sensor_is_updated = true;
+                break;
+            }
+            case OBC_V:
+            {
+                full_sensor_list.get(1).sensor_list.get(6).sensor_avail = true;
+                full_sensor_list.get(1).sensor_list.get(6).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(1).sensor_list.get(6).sensor_is_updated = true;
+                break;
+            }
+            case OBC_I:
+            {
+                full_sensor_list.get(2).sensor_list.get(6).sensor_avail = true;
+                full_sensor_list.get(2).sensor_list.get(6).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(2).sensor_list.get(6).sensor_is_updated = true;
+                break;
+            }
+            case SHUNT_DPOT:
+            break;
+            case COMS_TEMP:
+            {
+                full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(2).sensor_is_updated = true;
+                break;
+            }
+            case OBC_TEMP:
+            {
+                full_sensor_list.get(0).sensor_list.get(3).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(3).sensor_is_updated = true;
+                break;
+            }
+            case PAY_TEMP0:
+            {
+                full_sensor_list.get(0).sensor_list.get(4).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(4).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(4).sensor_is_updated = true;
+                break;
+            }
+            case PAY_TEMP1:
+            {
+                full_sensor_list.get(0).sensor_list.get(5).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(5).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(5).sensor_is_updated = true;
+                break;
+            }
+            case PAY_TEMP2:
+            {
+                full_sensor_list.get(0).sensor_list.get(6).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(6).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(6).sensor_is_updated = true;
+                break;
+            }
+            case PAY_TEMP3:
+            {
+                full_sensor_list.get(0).sensor_list.get(7).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(7).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(7).sensor_is_updated = true;
+                break;
+            }
+            case PAY_TEMP4:
+            {
+                full_sensor_list.get(0).sensor_list.get(8).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(8).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(0).sensor_list.get(8).sensor_is_updated = true;
+                break;
+            }
+            case PAY_HUM:
+            {
+                full_sensor_list.get(5).sensor_list.get(0).sensor_avail = true;
+                full_sensor_list.get(5).sensor_list.get(0).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(5).sensor_list.get(0).sensor_is_updated = true;
+                break;
+            }
+            case PAY_PRESS:
+            {
+                full_sensor_list.get(4).sensor_list.get(0).sensor_avail = true;
+                full_sensor_list.get(4).sensor_list.get(0).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(4).sensor_list.get(0).sensor_is_updated = true;
+                break;
+            }
+            case PAY_ACCEL:
+            {
+                full_sensor_list.get(3).sensor_list.get(0).sensor_avail = true;
+                full_sensor_list.get(3).sensor_list.get(0).sensor_data_buff = (((can_hk_buffer[(sensor_id*2) - 2] << 8) | (can_hk_buffer[(sensor_id*2) - 1])) & 0xFFFF);
+                full_sensor_list.get(3).sensor_list.get(0).sensor_is_updated = true;
+                break;
+            }
+        }
+    }
 }

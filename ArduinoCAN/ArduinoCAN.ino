@@ -309,10 +309,10 @@ void handleCommand(String in)
     }
 }
 
+#if PROGRAM_SELECT
 /**
 * Request all sensor data
 */
-#if PROGRAM_SELECT
 void request_sensor_data()
 {    
     Frame message_out;
@@ -321,12 +321,10 @@ void request_sensor_data()
     message_out.data[7] = 0x30;
     message_out.data[6] = 0x02;
     message_out.data[5] = 0x02;
-    for(int i = 0x01; i <= 0x1B; i++)//(int i = 0x01; i <= 0x1B; i++)
+    for(int i = 0x01; i <= 0x1B; i++)
     {
         message_out.data[4] = i;
         can_send_queue.push(message_out);
-        Serial.println(i);
-        Serial.println("RAM: " + String(freeRam(), DEC));
     }
     Serial.print("*Sensor data requested!\n");
 }
