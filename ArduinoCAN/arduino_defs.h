@@ -124,6 +124,7 @@ Date          Author              Description of Change
 #define MEMORY_DUMP_ABS					6
 #define CHECK_MEM_REQUEST				9
 #define MEMORY_CHECK_ABS				10
+#define DOWNLINKING_SCIENCE				0xCC
 /* K-Service							*/
 #define ADD_SCHEDULE					1
 #define CLEAR_SCHEDULE					2

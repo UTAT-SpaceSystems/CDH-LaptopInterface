@@ -1262,15 +1262,17 @@ void logIncomingTime(void)
 
 void decode_memory(void)
 {
-    // switch(tm_to_decode[146])
-    // {
-    //     case MEMORY_DUMP_ABS:
-    //         processMemoryDump();
-    //         break;
-    //     case MEMORY_CHECK_ABS:
-    //         processMemoryCheck();
-    //         break;
-    // }
+    switch(tm_to_decode[146])
+    {
+        // case MEMORY_DUMP_ABS:
+        //     processMemoryDump();
+        //     break;
+        // case MEMORY_CHECK_ABS:
+        //     processMemoryCheck();
+        //     break;
+        case DOWNLINKING_SCIENCE:
+            //log_science();
+    }
     return;
 }
 
