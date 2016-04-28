@@ -18,6 +18,8 @@
 *   03/21/16      Steven Yin          Updated housekeeping definitions
 *
 *   03/29/16      Steven Yin          perfection of UI(work in progress)
+*  
+*   04/27/16      Steven Yin          Added CAN send buffer
 */
 
 
@@ -112,6 +114,15 @@ void setup()
         full_sensor_list.get(i).boundary_high = 65535;
         full_sensor_list.get(i).boundary_low = 0;
     }
+    
+    // Boundaries for voltage sensors
+    full_sensor_list.get(1).boundary_high = 8.4;
+    full_sensor_list.get(1).boundary_low = 0;
+    
+    // Boundaries for current sensors
+    full_sensor_list.get(2).boundary_high = 4.5;
+    full_sensor_list.get(2).boundary_low = 0;
+    
 }
 
 /*
@@ -939,6 +950,43 @@ void render_graphics()
         fill(grey);
         text("NA", displayWidth / 2 + 220, HEADER_HEIGHT + 100);
     }
+    resetFormat();
+    
+    // SET FILTER button
+    if (mouseX > displayWidth / 2 + 50 && mouseX < displayWidth / 2 + 170 && mouseY > HEADER_HEIGHT + 175 && mouseY < HEADER_HEIGHT + 215)
+    {
+       fill(white);
+    }
+    else
+    {
+       fill(grey);
+    }
+    rect(displayWidth / 2 + 50, HEADER_HEIGHT + 175, 120, 40, 8);
+    fill(black);
+    text("SET FILTER", displayWidth / 2 + 70, HEADER_HEIGHT + 200);
+    
+    resetFormat();
+    
+    //Clear FILTER button
+    if (mouseX > displayWidth - 340 && mouseX < displayWidth - 220 && mouseY > HEADER_HEIGHT + 175 && mouseY < HEADER_HEIGHT + 215)
+    {
+       fill(white);
+    }
+    else
+    {
+       fill(grey);
+    }
+    
+    rect(displayWidth - 340, HEADER_HEIGHT + 175, 120, 40, 8);
+    fill(black);
+    text("CLEAR FILTER", displayWidth - 330, HEADER_HEIGHT + 200);
+    
+    resetFormat();
+    
+    // Current FILTER CAN MESSAGE BUFFER
+    textSize(20);
+    text("CAN FILTER MESSAGE BUFFER:", displayWidth / 2 + 220, HEADER_HEIGHT + 175);
+    
     resetFormat();
     
     // PLOT_DATA button

@@ -42,6 +42,8 @@
     *
     *   03/21/2016      S: Updated for the new housekeeping definitions
     *
+    *   04/27/2016      S: Merge QueueList and QueueArray in to QueueArray
+    *
 */
 
 /* Includes */
@@ -49,10 +51,11 @@
 #include <SPI.h>
 #include "cmd_strobes.h"
 #include "registers.h"
-#include "QueueList.h"
 
 /* Queue for Messages to Send */
-QueueList <packet> packetsFifo; 
+#if !PROGRAM_SELEC
+QueueArray <packet> packetsFifo;
+#endif
 
 void setup()
 {
@@ -148,7 +151,7 @@ void loop()
         {
             handleCommand(serial_message);
         }
-        #if PROGRAM_SELECT
+#if PROGRAM_SELECT
         else if(serial_message[0] == '^')
         {
             digitalWrite(LED2, HIGH);
@@ -159,7 +162,7 @@ void loop()
                 can_send_queue.push(message_out);
             digitalWrite(LED2, LOW);
         }
-        #endif
+#endif
     }
 }
 
@@ -286,11 +289,14 @@ void handleCommand(String in)
     }
     switch(command)
     {
+#if PROGRAM_SELECT
         case REQ_SENSOR_DATA:
         {
             request_sensor_data();
             break;
         }
+ #endif
+ #if !PROGRAM_SELECT
         case GET_HK_DATA:
         {
             if(is_hk_ready)
@@ -299,30 +305,37 @@ void handleCommand(String in)
             }
             break;
         }
+#endif
     }
 }
 
 /**
 * Request all sensor data
 */
+#if PROGRAM_SELECT
 void request_sensor_data()
-{
+{    
     Frame message_out;
     message_out.is_ok = true;
     message_out.id = 20;
     message_out.data[7] = 0x30;
     message_out.data[6] = 0x02;
     message_out.data[5] = 0x02;
-    for(int i = 0x01; i <= 0x1B; i++)
+    for(int i = 0x01; i <= 0x1B; i++)//(int i = 0x01; i <= 0x1B; i++)
     {
         message_out.data[4] = i;
         can_send_queue.push(message_out);
+        Serial.println(i);
+        Serial.println("RAM: " + String(freeRam(), DEC));
     }
     Serial.print("*Sensor data requested!\n");
 }
+#endif
+
 /**
 * Get data from hk_array[] and send it to the laptop interface
 */
+#if !PROGRAM_SELECT
 void get_hk_data()
 {
     uint32_t buff = 0;
@@ -336,6 +349,7 @@ void get_hk_data()
         buff = 0;
     }
 }
+#endif
 
 /**
 * Prints an int in hexadecimal WITH leading (insignificant) zeros

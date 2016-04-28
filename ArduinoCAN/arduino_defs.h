@@ -1,6 +1,6 @@
 /*
 ----------------------------------
-UTAT Space Systems CANBus Analyzer
+UTAT Space Systems LaptopInterface
 ----------------------------------
 
 DEVELOPMENT HISTORY:
@@ -21,7 +21,7 @@ Date          Author              Description of Change
 #include "QueueArray.h"
 
 /* PROGRAM SELECTION */
-#define PROGRAM_SELECT  0// 1 == CAN-BUS, 0 == TRANSCEIVER
+#define PROGRAM_SELECT  1// 1 == CAN-BUS, 0 == TRANSCEIVER
 
 /* PARAMETER DEFINITIONS */
 #define PANELX_V				0x01
@@ -170,10 +170,19 @@ Date          Author              Description of Change
 #define FDIR_GROUND_ID					0x14
 #define SCHED_GROUND_ID					0x15
 
+// Commands DEFINE
+#define REQ_SENSOR_DATA   0x00
+#define GET_HK_DATA    0x01
+
+// If there is data in hk_array
+bool is_hk_ready = false;
+bool is_sci_ready = false;
 
 struct packet{
 	byte array[PACKET_LENGTH];
 };
+
+#if !PROGRAM_SELECT
 
 /* Global Variables for Transceiver Operations */
 unsigned long previousTime = 0;
@@ -192,26 +201,16 @@ byte ack_acquired;
 byte transmitting_sequence_control;
 byte tm_to_downlink[PACKET_LENGTH];
 
-
-
-// Commands DEFINE
-#define REQ_SENSOR_DATA   0x00
-#define GET_HK_DATA    0x01
-
 // BIG_ARRAY
 uint8_t hk_array[76];
 uint8_t sci_array[53];
-
-// If there is data in hk_array
-bool is_hk_ready = false;
-bool is_sci_ready = false;
 
 // Commands Flags
 uint8_t toggle_values = 0;
 uint8_t req_hk = 0;
 uint8_t req_time = 0;
 
-
+#endif
 
 // The FIFO buffer for serial output(trans)
 QueueArray<uint32_t> trans_serial_queue;
