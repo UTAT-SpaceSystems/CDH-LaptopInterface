@@ -22,7 +22,6 @@
 *   04/27/16      Steven Yin          Added CAN send buffer
 */
 
-
 void close()
 {
     arduino.stop();
@@ -93,7 +92,7 @@ void setup()
     dh = new DisposeHandler(this);
     
     // Write the headline for log
-    log.print("TIME,PANELX_V,PANELX_I,PANELY_V,PANELY_I,BATTM_V,BATT_V,BATTIN_I,BATTOUT_I,BATT_TEMP,EPS_TEMP,COMS_V,COMS_I,PAY_V,PAY_I,OBC_V,OBC_I,SHUNT_DPOT,COMS_TEMP,OBC_TEMP,PAY_TEMP0,PAY_TEMP1,PAY_TEMP2,PAY_TEMP3,PAY_TEMP4,PAY_HUM,PAY_PRESS,PAY_ACCEL\r\n");
+    log.print("TIME,PANELX_V,PANELX_I,PANELY_V,PANELY_I,BATTM_V,BATT_V,BATTIN_I,BATTOUT_I,BATT_TEMP,EPS_TEMP,COMS_V,COMS_I,PAY_V,PAY_I,OBC_V,OBC_I,SHUNT_DPOT,COMS_TEMP,OBC_TEMP,PAY_TEMP0,PAY_TEMP1,PAY_TEMP2,PAY_TEMP3,PAY_TEMP4,PAY_HUM,PAY_PRESS,PAY_ACCEL\r\n");    
     
     // Stream data structs
     arduino_stream = new LinkedList();
@@ -114,10 +113,9 @@ void setup()
     // Set the boundaries NEED TO BE CHANGED
     for(int i = 0; i < fields.length; i++)
     {
-        full_sensor_list.get(i).boundary_high = 65535;
+        full_sensor_list.get(i).boundary_high = 100;
         full_sensor_list.get(i).boundary_low = 0;
     }
-    
     // Boundaries for voltage sensors
     full_sensor_list.get(1).boundary_high = 8.4;
     full_sensor_list.get(1).boundary_low = 0;
@@ -242,7 +240,6 @@ void draw()
                     
                     can_hk_buffer[(sensor_id-1)*2] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
                     can_hk_buffer[((sensor_id-1)*2)+1] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
-                    
                 }
             }
         }
@@ -1091,10 +1088,10 @@ void establishContact()
      }
  }
  
- void log_data()
+  void log_data()
  {
      time = new Date();
-     log.print(time + "\t\t");
+     log.print(time + "\t\t,");
      for(int i = 0x01; i <= 0x1B; i++)
      {
          log.print((int)(((can_hk_buffer[(i*2) - 2] << 8) | (can_hk_buffer[(i*2) - 1])) & 0xFFFF) + ",\t");
