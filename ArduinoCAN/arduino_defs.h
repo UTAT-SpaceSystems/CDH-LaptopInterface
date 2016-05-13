@@ -21,7 +21,7 @@ Date          Author              Description of Change
 #include "QueueArray.h"
 
 /* PROGRAM SELECTION */
-#define PROGRAM_SELECT  0// 1 == CAN-BUS, 0 == TRANSCEIVER
+#define PROGRAM_SELECT  1// 1 == CAN-BUS, 0 == TRANSCEIVER
 
 /* PARAMETER DEFINITIONS */
 #define PANELX_V				0x01

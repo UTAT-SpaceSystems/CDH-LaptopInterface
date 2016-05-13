@@ -17,6 +17,7 @@ import javax.swing.JOptionPane;
 import java.util.Queue;
 import java.util.LinkedList;
 import processing.serial.*;
+import java.util.Arrays;
 
 // Working mode CAN=0 TRANS=1
 int mode = 0;
@@ -260,3 +261,11 @@ final int MPPTY = 0x1D;
 final int ABS_TIME_D = 0x1E;
 final int ABS_TIME_H = 0x1F;
 final int ABS_TIME_M = 0x20;
+
+/*
+ *
+ *   log_data defines
+ *
+ */
+ 
+byte can_hk_buffer[] = new byte[54];
