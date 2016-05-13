@@ -1048,7 +1048,7 @@ void establishContact()
   void log_data()
  {
      time = new Date();
-     log.print(time + "\t\t");
+     log.print(time + "\t\t,");
      for(int i = 0x01; i <= 0x1B; i++)
      {
          log.print((int)(((can_hk_buffer[(i*2) - 2] << 8) | (can_hk_buffer[(i*2) - 1])) & 0xFFFF) + ",\t");
