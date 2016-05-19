@@ -261,6 +261,18 @@ final int MPPTY = 0xFE;
 final int PAY_TEMP = 0x64;
 final int PAY_ACCEL_Y = 0x65;
 final int PAY_ACCEL_Z = 0x66;
+final int PAY_FL_PD0  = 0x1C;
+final int PAY_FL_PD1  = 0x1D;
+final int PAY_FL_PD2  = 0x1E;
+final int PAY_FL_PD3  = 0x1F;
+final int PAY_FL_PD4  = 0x20;
+final int PAY_FL_PD5  = 0x21;
+final int PAY_FL_PD6  = 0x22;
+final int PAY_FL_PD7  = 0x23;
+final int PAY_FL_PD8  = 0x24;
+final int PAY_FL_PD9  = 0x25;
+final int PAY_FL_PD10 = 0x26;
+final int PAY_FL_PD11 = 0x27;
 
 /*
  *
@@ -268,5 +280,5 @@ final int PAY_ACCEL_Z = 0x66;
  *
  */
  
-byte can_hk_buffer[] = new byte[54];
-int hk_def[] = new int[50];
+byte can_hk_buffer[] = new byte[58];
+int hk_def[] = new int[58];

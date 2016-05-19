@@ -51,6 +51,18 @@ Date          Author              Description of Change
 #define PAY_HUM					0x19
 #define PAY_PRESS				0x1A
 #define PAY_ACCEL_X				0x1B
+#define PAY_FL_PD0				0x1C
+#define PAY_FL_PD1				0x1D
+#define PAY_FL_PD2				0x1E
+#define PAY_FL_PD3				0x1F
+#define PAY_FL_PD4				0x20
+#define PAY_FL_PD5				0x21
+#define PAY_FL_PD6				0x22
+#define PAY_FL_PD7				0x23
+#define PAY_FL_PD8				0x24
+#define PAY_FL_PD9				0x25
+#define PAY_FL_PD10				0x26
+#define PAY_FL_PD11				0x27
 #define MPPTX                   0xFF
 #define MPPTY                   0xFE
 #define PAY_TEMP				0x64
@@ -204,7 +216,7 @@ byte tm_to_downlink[PACKET_LENGTH];
 
 // BIG_ARRAY
 uint8_t hk_array[76];
-uint8_t sci_array[53];
+uint8_t hk_def[58];
 
 // Commands Flags
 uint8_t toggle_values = 0;

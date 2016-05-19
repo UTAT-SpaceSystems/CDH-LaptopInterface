@@ -61,6 +61,7 @@ void setup()
 {
     Serial.begin(9600);
 #if !PROGRAM_SELECT
+    hkDefInitialize();
     packetsFifo.setPrinter(Serial);
 #endif
     establishContact();
@@ -254,7 +255,9 @@ void parseCANMessage()
 #endif
 
 /**
-* Prints out all hk data received from the transceiver.
+* Prints out all hk data received from the transceiver so that it can be picked
+  up by the GUI program over the COM port that's being used as a serial monitor.
+  get_hk_data() gets the data ready for this step.
 */
 void parseTransMessage()
 {
@@ -331,7 +334,8 @@ void request_sensor_data()
 #endif
 
 /**
-* Get data from hk_array[] and send it to the laptop interface
+* Get the housekeeping get that was retrieved using the transceiver (located in hk_arra[])
+    so that it can be sent to the GUI using the function parseTransMessage().
 */
 #if !PROGRAM_SELECT
 void get_hk_data()
@@ -340,7 +344,7 @@ void get_hk_data()
     for(int i = 50; i > 0; i -= 2)
     {
         buff = ((uint32_t)'?') << 24;
-        buff = buff | ((uint32_t)(((50 - i) / 2 + 1)) << 16);
+        buff = buff | ((uint32_t)(hk_def[i]) << 16);   // sensor ID.
         buff = buff | ((uint32_t)hk_array[i] << 8);
         buff = buff | (uint32_t)hk_array[i-1];
         trans_serial_queue.push(buff);
@@ -1229,9 +1233,9 @@ void decode_housekeeping(void)
             //logHKParameterReport()
             break;
         case HK_REPORT:
-            for(i = 5; i < 55; i++)
+            for(i = 0; i < 58; i++)
             {
-                hk_array[i - 5] = tm_to_decode[i + 76];
+                hk_array[i] = tm_to_decode[i + 76];
             }
             Serial.println("*HOUSEKEEPING UPDATED\n");
             is_hk_ready = true;
@@ -1293,6 +1297,72 @@ void decode_kservice(void)
 void decode_fdir(void)
 {
     // Nothing yet.
+    return;
+}
+#endif
+
+#if PROGRAM_SELECT:
+void hkDefInitialize(void)
+{
+    // HK Definition
+    hk_def[57] = PAY_FL_PD5;
+    hk_def[56] = PAY_FL_PD5;
+    hk_def[55] = PAY_FL_PD4;
+    hk_def[54] = PAY_FL_PD4;
+    hk_def[53] = PANELX_V;
+    hk_def[52] = PANELX_V;
+    hk_def[51] = PANELX_I;
+    hk_def[50] = PANELX_I;
+    hk_def[49] = PANELY_V;
+    hk_def[48] = PANELY_V;
+    hk_def[47] = PANELY_I;
+    hk_def[46] = PANELY_I;
+    hk_def[45] = PAY_FL_PD3;
+    hk_def[44] = PAY_FL_PD3;
+    hk_def[43] = BATT_V;
+    hk_def[42] = BATT_V;
+    hk_def[41] = BATTIN_I;
+    hk_def[40] = BATTIN_I;
+    hk_def[39] = BATTOUT_I;
+    hk_def[38] = BATTOUT_I;
+    hk_def[37] = PAY_FL_PD5;
+    hk_def[36] = PAY_FL_PD4;
+    hk_def[35] = EPS_TEMP;
+    hk_def[34] = EPS_TEMP;  //
+    hk_def[33] = COMS_V;
+    hk_def[32] = COMS_V;
+    hk_def[31] = COMS_I;
+    hk_def[30] = COMS_I;
+    hk_def[29] = PAY_V;
+    hk_def[28] = PAY_V;
+    hk_def[27] = PAY_I;
+    hk_def[26] = PAY_I;
+    hk_def[25] = OBC_V;
+    hk_def[24] = OBC_V;
+    hk_def[23] = OBC_I;
+    hk_def[22] = OBC_I;
+    hk_def[21] = COMS_TEMP; //
+    hk_def[20] = COMS_TEMP;
+    hk_def[19] = OBC_TEMP;  //
+    hk_def[18] = OBC_TEMP;
+    hk_def[17] = PAY_TEMP2;
+    hk_def[16] = PAY_TEMP2;
+    hk_def[15] = PAY_PRESS;
+    hk_def[14] = PAY_PRESS;
+    hk_def[13] = MPPTX;
+    hk_def[12] = MPPTX;
+    hk_def[11] = MPPTY;
+    hk_def[10] = MPPTY;
+    hk_def[9] = PAY_ACCEL_X;
+    hk_def[8] = PAY_ACCEL_X;
+    hk_def[7] = PAY_ACCEL_Y;
+    hk_def[6] = PAY_ACCEL_Y;
+    hk_def[5] = PAY_ACCEL_Z;
+    hk_def[4] = PAY_ACCEL_Z;
+    hk_def[3] = PAY_FL_PD1;
+    hk_def[2] = PAY_FL_PD1;
+    hk_def[1] = PAY_FL_PD0;
+    hk_def[0] = PAY_FL_PD0;
     return;
 }
 #endif
