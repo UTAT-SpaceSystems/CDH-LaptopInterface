@@ -50,12 +50,12 @@ Date          Author              Description of Change
 #define PAY_TEMP4				0x18
 #define PAY_HUM					0x19
 #define PAY_PRESS				0x1A
-#define PAY_ACCEL				0x1B
-#define MPPTX                   0x1C
-#define MPPTY                   0x1D
-#define ABS_TIME_D              0x1E
-#define ABS_TIME_H              0x1F
-#define ABS_TIME_M              0x20
+#define PAY_ACCEL_X				0x1B
+#define MPPTX                   0xFF
+#define MPPTY                   0xFE
+#define PAY_TEMP				0x64
+#define PAY_ACCEL_Y				0x65
+#define PAY_ACCEL_Z				0x66
 
 /* Transceiver Definitions */
 #define PACKET_LENGTH 152

@@ -255,12 +255,12 @@ final int PAY_TEMP3 = 0x17;
 final int PAY_TEMP4 = 0x18;
 final int PAY_HUM = 0x19;
 final int PAY_PRESS = 0x1A;
-final int PAY_ACCEL = 0x1B;
-final int MPPTX = 0x1C;
-final int MPPTY = 0x1D;
-final int ABS_TIME_D = 0x1E;
-final int ABS_TIME_H = 0x1F;
-final int ABS_TIME_M = 0x20;
+final int PAY_ACCEL_X = 0x1B;
+final int MPPTX = 0xFF;
+final int MPPTY = 0xFE;
+final int PAY_TEMP = 0x64;
+final int PAY_ACCEL_Y = 0x65;
+final int PAY_ACCEL_Z = 0x66;
 
 /*
  *
@@ -269,3 +269,4 @@ final int ABS_TIME_M = 0x20;
  */
  
 byte can_hk_buffer[] = new byte[54];
+int hk_def[] = new int[50];

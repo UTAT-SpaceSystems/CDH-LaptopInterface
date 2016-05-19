@@ -53,7 +53,7 @@
 #include "registers.h"
 
 /* Queue for Messages to Send */
-#if !PROGRAM_SELEC
+#if !PROGRAM_SELECT
 QueueArray <packet> packetsFifo;
 #endif
 
@@ -337,10 +337,10 @@ void request_sensor_data()
 void get_hk_data()
 {
     uint32_t buff = 0;
-    for(int i = 53; i > 4; i -= 2)
+    for(int i = 50; i > 0; i -= 2)
     {
         buff = ((uint32_t)'?') << 24;
-        buff = buff | ((uint32_t)(((53 - i) / 2 + 1)) << 16);
+        buff = buff | ((uint32_t)(((50 - i) / 2 + 1)) << 16);
         buff = buff | ((uint32_t)hk_array[i] << 8);
         buff = buff | (uint32_t)hk_array[i-1];
         trans_serial_queue.push(buff);
@@ -1229,9 +1229,9 @@ void decode_housekeeping(void)
             //logHKParameterReport()
             break;
         case HK_REPORT:
-            for(i = 4; i < 57; i++)
+            for(i = 5; i < 55; i++)
             {
-                hk_array[i] = tm_to_decode[i + 75];
+                hk_array[i - 5] = tm_to_decode[i + 76];
             }
             Serial.println("*HOUSEKEEPING UPDATED\n");
             is_hk_ready = true;
