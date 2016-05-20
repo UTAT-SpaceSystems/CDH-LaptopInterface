@@ -67,7 +67,7 @@ public enum SensorType
     current(2),
     acceleration(3),
     pressure(4),
-    humidity(5);
+    photodiode(5);
     
     int num; // Number 0-5
     
@@ -85,7 +85,7 @@ public enum SensorType
 // The big object for everything
 ArrayList<SensorGroup> full_sensor_list = new ArrayList();
 
-String[] fields = {"TEMP [C]", "VOLTAGE [V]", "CURRENT [mA]", "ACCELERATION %", "PRES [KPa]", "HUMIDITY %"};
+String[] fields = {"TEMP [C]", "VOLTAGE [mV]", "CURRENT [mA]", "ACCELERATION [mg]", "PRES [mBar]", "PHOTO %"};
 
 int[] column_centers = new int[fields.length];
 
@@ -123,7 +123,7 @@ SensorGroup volt = new SensorGroup(SensorType.voltage);
 SensorGroup curr = new SensorGroup(SensorType.current);
 SensorGroup acce = new SensorGroup(SensorType.acceleration);
 SensorGroup pres = new SensorGroup(SensorType.pressure);
-SensorGroup humi = new SensorGroup(SensorType.humidity);
+SensorGroup photo = new SensorGroup(SensorType.photodiode);
 
 // Number of messages shown
 final int MESSAGE_NUM = 30;
@@ -280,5 +280,5 @@ final int PAY_FL_PD11 = 0x27;
  *
  */
  
-byte can_hk_buffer[] = new byte[58];
+byte hk_buffer[] = new byte[58];
 int hk_def[] = new int[58];

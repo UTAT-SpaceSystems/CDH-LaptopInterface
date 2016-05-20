@@ -102,7 +102,7 @@ void setup()
     // Setup the com port
     if(Serial.list().length == 0)
     {
-       JOptionPane.showMessageDialog(null,"No COM deviece connectd, existing.","UTAT",JOptionPane.ERROR_MESSAGE);
+       JOptionPane.showMessageDialog(null,"No COM device connectd, existing.","UTAT",JOptionPane.ERROR_MESSAGE);
        System.exit(0);
     }
     port_selection = (String) JOptionPane.showInputDialog(null,"Choose COM port:","UTAT",JOptionPane.QUESTION_MESSAGE,null,Serial.list(),Serial.list()[0]);
@@ -151,7 +151,7 @@ void setup()
     dh = new DisposeHandler(this);
     
     // Write the headline for log
-    log.print("TIME,PANELX_V,PANELX_I,PANELY_V,PANELY_I,BATTM_V,BATT_V,BATTIN_I,BATTOUT_I,BATT_TEMP,EPS_TEMP,COMS_V,COMS_I,PAY_V,PAY_I,OBC_V,OBC_I,SHUNT_DPOT,COMS_TEMP,OBC_TEMP,PAY_TEMP0,PAY_TEMP1,PAY_TEMP2,PAY_TEMP3,PAY_TEMP4,PAY_HUM,PAY_PRESS,PAY_ACCEL\r\n");    
+    log.print("TIME,PAY_FL_PD5,PAY_FL_PD4,PANELX_V,PANELX_I,PANELY_V,PANELY_I,PAY_FL_PD3,BATT_V,BATTIN_I,BATTOUT_I,PAY_FL_PD2,EPS_TEMP,COMS_V,COMS_I,PAY_V,PAY_I,OBC_V,OBC_I,COMS_TEMP,OBC_TEMP,PAY_TEMP0,PAY_PRESS,MPPTX,MPPTY,PAY_ACCEL_X,PAY_ACCEL_Y,PAY_ACCEL_Z,PAY_FL_PD1,PAY_FL_PD0\r\n");    
     
     // Stream data structs
     arduino_stream = new LinkedList();
@@ -167,22 +167,33 @@ void setup()
     full_sensor_list.add(curr);
     full_sensor_list.add(acce);
     full_sensor_list.add(pres);
-    full_sensor_list.add(humi);
-    
-    // Set the boundaries NEED TO BE CHANGED
-    for(int i = 0; i < fields.length; i++)
-    {
-        full_sensor_list.get(i).boundary_high = 100;
-        full_sensor_list.get(i).boundary_low = 0;
-    }
+    full_sensor_list.add(photo);
+
+    // Boundaries for temperature sensors
+    full_sensor_list.get(0).boundary_high = 100;
+    full_sensor_list.get(0).boundary_low = 0;  
+
     // Boundaries for voltage sensors
-    full_sensor_list.get(1).boundary_high = 8.4;
+    full_sensor_list.get(1).boundary_high = 8400;
     full_sensor_list.get(1).boundary_low = 0;
     
     // Boundaries for current sensors
-    full_sensor_list.get(2).boundary_high = 4.5;
+    full_sensor_list.get(2).boundary_high = 4500;
     full_sensor_list.get(2).boundary_low = 0;
-    Arrays.fill(can_hk_buffer, (byte)-1);
+    
+    // Boundaries for acceleration
+    full_sensor_list.get(3).boundary_high = 2000;
+    full_sensor_list.get(3).boundary_low = 0;
+    
+    // Boundaries for pressure
+    full_sensor_list.get(4).boundary_high = 2000;
+    full_sensor_list.get(4).boundary_low = 0;
+    
+    // Boundaries for photodiode sensors
+    full_sensor_list.get(5).boundary_high = 1024;
+    full_sensor_list.get(5).boundary_low = 0;   
+    
+    Arrays.fill(hk_buffer, (byte)0);
 }
 
 /*
@@ -274,7 +285,7 @@ void draw()
                 arduino_stream.add("TIME: " + time_f.format(time) + "        MESSAGE: " + in_string.substring(1,in_string.length()));
             }
         }
-        else if (in_string.charAt(0) == '$')
+        else if (in_string.charAt(0) == '$')  // Received CAN data!
         {
             String[] frame = parse_data(in_string);
             if(frame[1] != "")
@@ -298,7 +309,7 @@ void draw()
                     int sensor_id = Integer.parseInt(frame[1].substring(4,6), 16);
                     byte i = 0;
                     byte index = 0;
-                    for (i = 0; i < 50; i+=2)
+                    for (i = 0; i < 59; i+=2)
                     {
                         if(hk_def[i] == sensor_id)
                         {
@@ -306,12 +317,12 @@ void draw()
                         }
                     }
                     
-                    can_hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
-                    can_hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
+                    hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
+                    hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
                 }
             }
         }
-        else if(in_string.charAt(0) == '?')
+        else if(in_string.charAt(0) == '?')    // Received transceiver data!
         {
             String[] frame = parse_data_trans(in_string);
             if(frame[1] != "")
@@ -333,187 +344,17 @@ void draw()
                     }
                 
                     int sensor_id = Integer.parseInt(frame[1].substring(0,2), 16);
-                    int sensor_value = 0;
-                    switch(sensor_id)
+                    byte i = 0;
+                    byte index = 0;
+                    for (i = 0; i < 59; i+=2)
                     {
-                        // Example case
-                        /*
-                        case SENSOR_NAME:
-                        // If no conversion on senssor data is needed otherwise convert data to integer
-                            full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(1,3), 16);
-                            full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
-                        */
-                        case PANELX_V:
+                        if(hk_def[i] == sensor_id)
                         {
-                            full_sensor_list.get(1).sensor_list.get(0).sensor_avail = true;
-                            full_sensor_list.get(1).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(1).sensor_list.get(0).sensor_is_updated = true;
-                            break;
-                        }
-                        case PANELX_I:
-                        {
-                            full_sensor_list.get(2).sensor_list.get(0).sensor_avail = true;
-                            full_sensor_list.get(2).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(2).sensor_list.get(0).sensor_is_updated = true;
-                            break;
-                        }
-                        case PANELY_V:
-                        {
-                            full_sensor_list.get(1).sensor_list.get(1).sensor_avail = true;
-                            full_sensor_list.get(1).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(1).sensor_list.get(1).sensor_is_updated = true;
-                            break;
-                        }
-                        case PANELY_I:
-                        {
-                            full_sensor_list.get(2).sensor_list.get(1).sensor_avail = true;
-                            full_sensor_list.get(2).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(2).sensor_list.get(1).sensor_is_updated = true;
-                            break;
-                        }
-                        case BATTM_V:
-                        {
-                            full_sensor_list.get(1).sensor_list.get(2).sensor_avail = true;
-                            full_sensor_list.get(1).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(1).sensor_list.get(2).sensor_is_updated = true;
-                            break;
-                        }
-                        case BATT_V:
-                        {
-                            full_sensor_list.get(1).sensor_list.get(3).sensor_avail = true;
-                            full_sensor_list.get(1).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(1).sensor_list.get(3).sensor_is_updated = true;
-                            break;
-                        }
-                        case BATTIN_I:
-                        {
-                            full_sensor_list.get(2).sensor_list.get(2).sensor_avail = true;
-                            full_sensor_list.get(2).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(2).sensor_list.get(2).sensor_is_updated = true;
-                            break;
-                        }
-                        case BATTOUT_I:
-                        {
-                            full_sensor_list.get(2).sensor_list.get(3).sensor_avail = true;
-                            full_sensor_list.get(2).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(2).sensor_list.get(3).sensor_is_updated = true;
-                            break;
-                        }
-                        case BATT_TEMP:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(0).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(0).sensor_is_updated = true;
-                            break;
-                        }
-                        case EPS_TEMP:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
-                            break;
-                        }
-                        case COMS_V:
-                        {
-                            full_sensor_list.get(1).sensor_list.get(4).sensor_avail = true;
-                            full_sensor_list.get(1).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(1).sensor_list.get(4).sensor_is_updated = true;
-                            break;
-                        }
-                        case COMS_I:
-                        {
-                            full_sensor_list.get(2).sensor_list.get(4).sensor_avail = true;
-                            full_sensor_list.get(2).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(2).sensor_list.get(4).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_V:
-                        {
-                            full_sensor_list.get(1).sensor_list.get(5).sensor_avail = true;
-                            full_sensor_list.get(1).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(1).sensor_list.get(5).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_I:
-                        {
-                            full_sensor_list.get(2).sensor_list.get(5).sensor_avail = true;
-                            full_sensor_list.get(2).sensor_list.get(5).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(2).sensor_list.get(5).sensor_is_updated = true;
-                            break;
-                        }
-                        case OBC_V:
-                        {
-                            full_sensor_list.get(1).sensor_list.get(6).sensor_avail = true;
-                            full_sensor_list.get(1).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(1).sensor_list.get(6).sensor_is_updated = true;
-                            break;
-                        }
-                        case OBC_I:
-                        {
-                            full_sensor_list.get(2).sensor_list.get(6).sensor_avail = true;
-                            full_sensor_list.get(2).sensor_list.get(6).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(2).sensor_list.get(6).sensor_is_updated = true;
-                            break;
-                        }
-                        case COMS_TEMP - 1:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(2).sensor_is_updated = true;
-                            break;
-                        }
-                        case OBC_TEMP - 1:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(3).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(3).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_TEMP0 - 1:
-                        {
-                            full_sensor_list.get(0).sensor_list.get(4).sensor_avail = true;
-                            full_sensor_list.get(0).sensor_list.get(4).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(0).sensor_list.get(4).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_HUM - 5:
-                        {
-                            full_sensor_list.get(5).sensor_list.get(0).sensor_avail = true;
-                            full_sensor_list.get(5).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(5).sensor_list.get(0).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_PRESS - 5:
-                        {
-                            full_sensor_list.get(4).sensor_list.get(0).sensor_avail = true;
-                            full_sensor_list.get(4).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(4).sensor_list.get(0).sensor_is_updated = true;
-                            break;
-                        }
-                        case PAY_ACCEL - 5:
-                        {
-                            full_sensor_list.get(3).sensor_list.get(0).sensor_avail = true;
-                            full_sensor_list.get(3).sensor_list.get(0).sensor_data_buff = Integer.parseInt(frame[1].substring(2,6), 16);
-                            full_sensor_list.get(3).sensor_list.get(0).sensor_is_updated = true;
-                            break;
-                        }
-                        case ABS_TIME_D - 7:
-                        {
-                            // day = Integer.parseInt(frame[1].substring(2,6), 16);
-                            break;
-                        }
-                        case ABS_TIME_H - 7:
-                        {
-                            // hour = Integer.parseInt(frame[1].substring(2,6), 16);
-                            break;
-                        }
-                        case ABS_TIME_M - 7:
-                        {
-                            // minute = Integer.parseInt(frame[1].substring(2,6), 16);
-                            break;
+                           index = i; 
                         }
                     }
+                    hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(2,4), 16);
+                    hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(4,6), 16);
                 }
             }
         }
@@ -995,10 +836,10 @@ void mouseClicked()
         {
             my_plot=SensorType.pressure;
         }
-        // Humidity button
+        // Photodiode button
         else if (mouseX > 720 && mouseX < 840 && mouseY > HEADER_HEIGHT + 20 && mouseY < HEADER_HEIGHT + 60)
         {
-            my_plot=SensorType.humidity;
+            my_plot=SensorType.photodiode;
         }
     }
 }
@@ -1035,82 +876,45 @@ void resetFormat()
 */
 void sensor_init()
 {
-    if (mode == 0)
-    {
-        // Tempreture sensors
-        temp.add_sensor(new Sensor("BATT_TEMP", 0x09, plot_red));
-        temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_green));
-        temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_blue));
-        temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_yellow));
-        temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_pink));
-        temp.add_sensor(new Sensor("PAY_TEMP1", 0x15, plot_cyan));
-        temp.add_sensor(new Sensor("PAY_TEMP2", 0x16, plot_orange));
-        temp.add_sensor(new Sensor("PAY_TEMP3", 0x17, plot_purple));
-        temp.add_sensor(new Sensor("PAY_TEMP4", 0x18, plot_brown));
+      // Tempreture sensors
+      temp.add_sensor(new Sensor("BATT_TEMP", 0x09, plot_red));
+      temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_green));
+      temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_blue));
+      temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_yellow));
+      temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_pink));
 
-        // Voltage sensors
-        volt.add_sensor(new Sensor("PANELX_V", 0x01, plot_red));
-        volt.add_sensor(new Sensor("PANELY_V", 0x03, plot_green));
-        volt.add_sensor(new Sensor("BATTM_V", 0x05, plot_blue));
-        volt.add_sensor(new Sensor("BATT_V", 0x06, plot_yellow));
-        volt.add_sensor(new Sensor("COMS_V", 0x0B, plot_pink));
-        volt.add_sensor(new Sensor("PAY_V", 0x0D, plot_cyan));
-        volt.add_sensor(new Sensor("OBC_V", 0x0F, plot_orange));
+      // Voltage sensors
+      volt.add_sensor(new Sensor("PANELX_V", 0x01, plot_red));
+      volt.add_sensor(new Sensor("PANELY_V", 0x03, plot_green));
+      volt.add_sensor(new Sensor("BATT_V", 0x06, plot_yellow));
+      volt.add_sensor(new Sensor("COMS_V", 0x0B, plot_pink));
+      volt.add_sensor(new Sensor("PAY_V", 0x0D, plot_cyan));
+      volt.add_sensor(new Sensor("OBC_V", 0x0F, plot_orange));
 
-        // Current sensors
-        curr.add_sensor(new Sensor("PANELX_I", 0x02, plot_red));
-        curr.add_sensor(new Sensor("PANELY_I", 0x04, plot_green));
-        curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_blue));
-        curr.add_sensor(new Sensor("BATTOUT_I", 0x08, plot_yellow));
-        curr.add_sensor(new Sensor("COMS_I", 0x0C, plot_pink));
-        curr.add_sensor(new Sensor("PAY_I", 0x0E, plot_cyan));
-        curr.add_sensor(new Sensor("OBC_I", 0x10, plot_orange));
-        
-        // Acceleration sensors
-        acce.add_sensor(new Sensor("PAY_ACCEL", 0x1B, plot_red));
-        
-        // Pressure sensors
-        pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));
-        
-        // Humidity sensors
-        humi.add_sensor(new Sensor("PAY_HUM", 0x19, plot_red));
-    }
-    else
-    {
-        // Tempreture sensors
-        temp.add_sensor(new Sensor("BATT_TEMP", 0x09, plot_red));
-        temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_green));
-        temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_blue));
-        temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_yellow));
-        temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_pink));
-
-        // Voltage sensors
-        volt.add_sensor(new Sensor("PANELX_V", 0x01, plot_red));
-        volt.add_sensor(new Sensor("PANELY_V", 0x03, plot_green));
-        volt.add_sensor(new Sensor("BATTM_V", 0x05, plot_blue));
-        volt.add_sensor(new Sensor("BATT_V", 0x06, plot_yellow));
-        volt.add_sensor(new Sensor("COMS_V", 0x0B, plot_pink));
-        volt.add_sensor(new Sensor("PAY_V", 0x0D, plot_cyan));
-        volt.add_sensor(new Sensor("OBC_V", 0x0F, plot_orange));
-
-        // Current sensors
-        curr.add_sensor(new Sensor("PANELX_I", 0x02, plot_red));
-        curr.add_sensor(new Sensor("PANELY_I", 0x04, plot_green));
-        curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_blue));
-        curr.add_sensor(new Sensor("BATTOUT_I", 0x08, plot_yellow));
-        curr.add_sensor(new Sensor("COMS_I", 0x0C, plot_pink));
-        curr.add_sensor(new Sensor("PAY_I", 0x0E, plot_cyan));
-        curr.add_sensor(new Sensor("OBC_I", 0x10, plot_orange));
-        
-        // Acceleration sensors
-        acce.add_sensor(new Sensor("PAY_ACCEL", 0x1B, plot_red));
-        
-        // Pressure sensors
-        pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));
-        
-        // Humidity sensors
-        humi.add_sensor(new Sensor("PAY_HUM", 0x19, plot_red));
-    }
+      // Current sensors
+      curr.add_sensor(new Sensor("PANELX_I", 0x02, plot_red));
+      curr.add_sensor(new Sensor("PANELY_I", 0x04, plot_green));
+      curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_blue));
+      curr.add_sensor(new Sensor("BATTOUT_I", 0x08, plot_yellow));
+      curr.add_sensor(new Sensor("COMS_I", 0x0C, plot_pink));
+      curr.add_sensor(new Sensor("PAY_I", 0x0E, plot_cyan));
+      curr.add_sensor(new Sensor("OBC_I", 0x10, plot_orange));
+      
+      // Acceleration sensors
+      acce.add_sensor(new Sensor("PAY_ACCEL_X", 0x1B, plot_red));
+      acce.add_sensor(new Sensor("PAY_ACCEL_Y", 0x65, plot_red));
+      acce.add_sensor(new Sensor("PAY_ACCEL_Z", 0x66, plot_red));
+      
+      // Pressure sensors
+      pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));
+      
+      // Photodiode sensors
+      photo.add_sensor(new Sensor("PAY_FL_PD0", 0x1C, plot_red));
+      photo.add_sensor(new Sensor("PAY_FL_PD1", 0x1D, plot_green));
+      photo.add_sensor(new Sensor("PAY_FL_PD2", 0x1E, plot_blue));
+      photo.add_sensor(new Sensor("PAY_FL_PD3", 0x1F, plot_yellow));
+      photo.add_sensor(new Sensor("PAY_FL_PD4", 0x20, plot_pink));
+      photo.add_sensor(new Sensor("PAY_FL_PD5", 0x21, plot_orange));
 }
 
 /*
@@ -1142,15 +946,11 @@ void establishContact()
      {
          String str;
          if(mode == 0)
-         {
              str = "~00";
-             log_data(); // Log hk data
-             update_hk_data();
-         }
          else 
-         {
              str = "~01";
-         }
+         log_data(); // Log hk data
+         update_hk_data();
          arduino.write(str); // Reqest all sensor data
          last_date = System.currentTimeMillis();
      }
@@ -1160,9 +960,13 @@ void establishContact()
  {
      time = new Date();
      log.print(time + "\t\t,");
-     for(int i = 0x01; i <= 0x1B; i++)
+     int value = 0;
+     for(int i = 0; i < 58; i+=2)
      {
-         log.print((int)(((can_hk_buffer[(i*2) - 2] << 8) | (can_hk_buffer[(i*2) - 1])) & 0xFFFF) + ",\t");
+         value = (int)hk_buffer[i];
+         value |= ((int)hk_buffer[i + 1]) << 8;
+         value &= 0xFFFF;
+         log.print(value + ",\t");
      }
      log.print("\r\n");
  }

@@ -341,7 +341,7 @@ void request_sensor_data()
 void get_hk_data()
 {
     uint32_t buff = 0;
-    for(int i = 50; i > 0; i -= 2)
+    for(int i = 57; i > 0; i -= 2)
     {
         buff = ((uint32_t)'?') << 24;
         buff = buff | ((uint32_t)(hk_def[i]) << 16);   // sensor ID.
@@ -1325,8 +1325,8 @@ void hkDefInitialize(void)
     hk_def[40] = BATTIN_I;
     hk_def[39] = BATTOUT_I;
     hk_def[38] = BATTOUT_I;
-    hk_def[37] = PAY_FL_PD5;
-    hk_def[36] = PAY_FL_PD4;
+    hk_def[37] = PAY_FL_PD2;
+    hk_def[36] = PAY_FL_PD2;
     hk_def[35] = EPS_TEMP;
     hk_def[34] = EPS_TEMP;  //
     hk_def[33] = COMS_V;
@@ -1345,8 +1345,8 @@ void hkDefInitialize(void)
     hk_def[20] = COMS_TEMP;
     hk_def[19] = OBC_TEMP;  //
     hk_def[18] = OBC_TEMP;
-    hk_def[17] = PAY_TEMP2;
-    hk_def[16] = PAY_TEMP2;
+    hk_def[17] = PAY_TEMP0;
+    hk_def[16] = PAY_TEMP0;
     hk_def[15] = PAY_PRESS;
     hk_def[14] = PAY_PRESS;
     hk_def[13] = MPPTX;
