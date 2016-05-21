@@ -305,10 +305,14 @@ void draw()
                         time = new Date();
                         can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1]);
                     }
-                
-                    int sensor_id = Integer.parseInt(frame[1].substring(4,6), 16);
+                    int big_type = Integer.parseInt(frame[1].substring(2,4), 16);
+                    int sensor_id = 0x88;  // dummy value, not currently used.
+                    if(big_type == 1)
+                        sensor_id = Integer.parseInt(frame[1].substring(6,8), 16);    // Housekeeping message
+                    if(big_type == 0)
+                        sensor_id = Integer.parseInt(frame[1].substring(4,6), 16);    // Sensor data message
                     byte i = 0;
-                    byte index = 0;
+                    byte index = 100;
                     for (i = 0; i < 59; i+=2)
                     {
                         if(hk_def[i] == sensor_id)
@@ -316,9 +320,11 @@ void draw()
                            index = i; 
                         }
                     }
-                    
-                    hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
-                    hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
+                    if(index < 100 && sensor_id != 0x88)
+                    {
+                        hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
+                        hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
+                    }
                 }
             }
         }
@@ -345,7 +351,7 @@ void draw()
                 
                     int sensor_id = Integer.parseInt(frame[1].substring(0,2), 16);
                     byte i = 0;
-                    byte index = 0;
+                    byte index = 100;
                     for (i = 0; i < 59; i+=2)
                     {
                         if(hk_def[i] == sensor_id)
@@ -353,9 +359,12 @@ void draw()
                            index = i; 
                         }
                     }
-                    hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(2,4), 16);
-                    hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(4,6), 16);
-                }
+                    if(index < 100)
+                    {
+                        hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(2,4), 16);
+                        hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(4,6), 16);
+                    }  
+              }
             }
         }
     }
@@ -902,8 +911,8 @@ void sensor_init()
       
       // Acceleration sensors
       acce.add_sensor(new Sensor("PAY_ACCEL_X", 0x1B, plot_red));
-      acce.add_sensor(new Sensor("PAY_ACCEL_Y", 0x65, plot_red));
-      acce.add_sensor(new Sensor("PAY_ACCEL_Z", 0x66, plot_red));
+      acce.add_sensor(new Sensor("PAY_ACCEL_Y", 0x65, plot_green));
+      acce.add_sensor(new Sensor("PAY_ACCEL_Z", 0x66, plot_blue));
       
       // Pressure sensors
       pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));

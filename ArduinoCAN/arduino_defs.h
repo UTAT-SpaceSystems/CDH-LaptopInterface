@@ -187,6 +187,122 @@ Date          Author              Description of Change
 #define REQ_SENSOR_DATA   0x00
 #define GET_HK_DATA    0x01
 
+/* CAN DEFINITIONS */
+
+#define CAN0_MB0				1
+#define CAN0_MB1				2
+#define CAN0_MB2				3
+#define CAN0_MB3				4
+#define CAN0_MB4				5
+#define CAN0_MB5				6
+#define CAN0_MB6				7
+#define CAN0_MB7				8
+
+#define CAN1_MB0				10
+#define CAN1_MB1				10
+#define CAN1_MB2				11
+#define CAN1_MB3				11
+#define CAN1_MB4				11
+#define CAN1_MB5				14
+#define CAN1_MB6				14
+#define CAN1_MB7				17
+
+/* IDs for COMS/SUB0 mailboxes */
+#define SUB0_ID0				20
+#define SUB0_ID1				21
+#define SUB0_ID2				22
+#define SUB0_ID3				23
+#define SUB0_ID4				24
+#define SUB0_ID5				25
+
+/* IDs for EPS/SUB1 mailboxes */
+#define SUB1_ID0				26
+#define SUB1_ID1				27
+#define SUB1_ID2				28
+#define SUB1_ID3				29
+#define SUB1_ID4				30
+#define SUB1_ID5				31
+
+/* IDs for PAYLOAD/SUB2 mailboxes */
+#define SUB2_ID0				32
+#define SUB2_ID1				33
+#define SUB2_ID2				34
+#define SUB2_ID3				35
+#define SUB2_ID4				36
+#define SUB2_ID5				37
+
+/* MessageType_ID  */
+#define MT_DATA					0x00
+#define MT_HK					0x01
+#define MT_COM					0x02
+#define MT_TC					0x03
+
+/* SENDER_ID */
+#define COMS_ID					0x00
+#define EPS_ID					0x01
+#define PAY_ID					0x02
+#define OBC_ID					0x03
+#define HK_TASK_ID				0x04
+#define DATA_TASK_ID			0x05
+#define TIME_TASK_ID			0x06
+#define COMS_TASK_ID			0x07
+#define EPS_TASK_ID				0x08
+#define PAY_TASK_ID				0x09
+#define OBC_PACKET_ROUTER_ID	0x0A
+#define SCHEDULING_TASK_ID		0x0B
+#define FDIR_TASK_ID			0x0C
+#define WD_RESET_TASK_ID		0x0D
+#define MEMORY_TASK_ID			0x0E
+#define HK_GROUND_ID			0x0F
+#define TIME_GROUND_ID			0x10
+#define MEM_GROUND_ID			0x11
+#define GROUND_PACKET_ROUTER_ID 0x13
+#define FDIR_GROUND_ID			0x14
+#define SCHED_GROUND_ID			0x15
+
+/* COMMAND SMALL-TYPE: */
+#define REQ_RESPONSE			0x01
+#define REQ_DATA				0x02
+#define REQ_HK					0x03
+#define RESPONSE 				0x04
+#define REQ_READ				0x05
+#define ACK_READ				0x06
+#define REQ_WRITE				0x07
+#define ACK_WRITE				0x08
+#define SET_SENSOR_HIGH			0x09
+#define SET_SENSOR_LOW			0x0A
+#define SET_VAR					0x0B
+#define SET_TIME				0x0C
+#define SEND_TM					0x0D
+#define SEND_TC					0x0E
+#define TM_PACKET_READY			0x0F
+#define OK_START_TM_PACKET		0x10
+#define TC_PACKET_READY			0x11
+#define OK_START_TC_PACKET		0x12
+#define TM_TRANSACTION_RESP		0x13
+#define TC_TRANSACTION_RESP		0x14
+#define SAFE_MODE_TYPE			0x15
+#define SEND_EVENT				0x16
+#define ASK_OBC_ALIVE			0x17
+#define OBC_IS_ALIVE			0x18
+#define SSM_ERROR_ASSERT		0x19
+#define SSM_ERROR_REPORT		0x1A
+#define ENTER_LOW_POWER_COM		0x1B
+#define EXIT_LOW_POWER_COM		0x1C
+#define ENTER_COMS_TAKEOVER_COM	0x1D
+#define EXIT_COMS_TAKEOVER_COM	0x1E
+#define PAUSE_OPERATIONS		0x1F
+#define RESUME_OPERATIONS		0x20
+#define LOW_POWER_MODE_ENTERED	0x21
+#define LOW_POWER_MODE_EXITED	0x22
+#define COMS_TAKEOVER_ENTERED	0x23
+#define COMS_TAKEOVER_EXITED	0x24
+#define OPERATIONS_PAUSED		0x25
+#define OPERATIONS_RESUMED		0x26
+#define OPEN_VALVES				0x27
+#define COLLECT_PD				0x28
+#define PD_COLLECTED			0x29
+
 // If there is data in hk_array
 bool is_hk_ready = false;
 bool is_sci_ready = false;
@@ -194,6 +310,8 @@ bool is_sci_ready = false;
 struct packet{
 	byte array[PACKET_LENGTH];
 };
+
+uint8_t hk_def[58];
 
 #if !PROGRAM_SELECT
 
@@ -216,7 +334,6 @@ byte tm_to_downlink[PACKET_LENGTH];
 
 // BIG_ARRAY
 uint8_t hk_array[76];
-uint8_t hk_def[58];
 
 // Commands Flags
 uint8_t toggle_values = 0;

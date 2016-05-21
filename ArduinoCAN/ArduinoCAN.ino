@@ -57,11 +57,23 @@
 QueueArray <packet> packetsFifo;
 #endif
 
+void hkDefInitialize(void);
+void establishContact();
+void handleCommand(String in);
+Frame parseMessageFromSerial(String in);
+boolean string_to_hex(String in, byte& out);
+void print_hex(int v, int num_places);
+#if PROGRAM_SELECT
+void parseCANMessage();
+void sendCANMessage();
+void request_sensor_data();
+#endif
+
 void setup()
 {
     Serial.begin(9600);
-#if !PROGRAM_SELECT
     hkDefInitialize();
+#if !PROGRAM_SELECT
     packetsFifo.setPrinter(Serial);
 #endif
     establishContact();
@@ -320,15 +332,23 @@ void request_sensor_data()
 {    
     Frame message_out;
     message_out.is_ok = true;
-    message_out.id = 20;
-    message_out.data[7] = 0x30;
-    message_out.data[6] = 0x02;
-    message_out.data[5] = 0x02;
-    for(int i = 0x01; i <= 0x1B; i++)
-    {
-        message_out.data[4] = i;
-        can_send_queue.push(message_out);
-    }
+    message_out.id = SUB0_ID5;
+    message_out.data[7] = (HK_TASK_ID << 4)|(SUB0_ID5);
+    message_out.data[6] = MT_COM;
+    message_out.data[5] = REQ_HK;
+    can_send_queue.push(message_out);
+    message_out.is_ok = true;
+    message_out.id = SUB1_ID5;
+    message_out.data[7] = (HK_TASK_ID << 4)|(SUB0_ID5);
+    message_out.data[6] = MT_COM;
+    message_out.data[5] = REQ_HK;
+    can_send_queue.push(message_out);
+    message_out.is_ok = true;
+    message_out.id = SUB2_ID5;
+    message_out.data[7] = (HK_TASK_ID << 4)|(SUB0_ID5);
+    message_out.data[6] = MT_COM;
+    message_out.data[5] = REQ_HK;
+    can_send_queue.push(message_out);
     Serial.print("*Sensor data requested!\n");
 }
 #endif
@@ -1301,7 +1321,6 @@ void decode_fdir(void)
 }
 #endif
 
-#if PROGRAM_SELECT:
 void hkDefInitialize(void)
 {
     // HK Definition
@@ -1365,4 +1384,3 @@ void hkDefInitialize(void)
     hk_def[0] = PAY_FL_PD0;
     return;
 }
-#endif
