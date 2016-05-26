@@ -308,24 +308,40 @@ void draw()
                 // Check for matching or default filter
                 if (filter.equals(frame[0]) || filter.equals("00"))
                 {
+                     byte value = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
                     // Stream size check
                     if (can_stream.size() < MESSAGE_NUM)
                     {
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id +"  INDEX:" + index);
+                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id +"  INDEX:" + index + "  VALUE: " + value);
                     }
                     else
                     {
                         can_stream.remove();
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id + "  INDEX:" + index);
+                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id + "  INDEX:" + index + "  VALUE: " + value);
                     }
 
                     if(index < 100 && sensor_id != 0x88)
                     {
-                        hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
-                        hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
+                       
+                        if(sensor_id == 31 || sensor_id == 32 || sensor_id == 33)
+                        {
+                            hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
+                            if(value > 4)
+                                hk_buffer[index + 1] = 4;
+                            else
+                                hk_buffer[index + 1] = value;
+                        }
+                        else
+                        {
+                            hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
+                            hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);                         
+                          
+                        }
+
                     }
+                    hk_buffer[53] = 0;
                 }
             }
         }
@@ -971,6 +987,7 @@ void establishContact()
      time = new Date();
      log.print(time + "\t\t,");
      int value = 0;
+     hk_buffer[53] = 0;
      for(int i = 56; i >= 0; i-=2)
      {
          value = (int)hk_buffer[i];

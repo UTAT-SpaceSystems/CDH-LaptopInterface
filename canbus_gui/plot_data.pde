@@ -271,6 +271,8 @@ void update_hk_data()
             */
             case PANELX_V:
             {
+                if(value > 8400)
+                    value = 8400;
                 full_sensor_list.get(1).sensor_list.get(0).sensor_avail = true;
                 full_sensor_list.get(1).sensor_list.get(0).sensor_data_buff = value;
                 full_sensor_list.get(1).sensor_list.get(0).sensor_is_updated = true;
@@ -278,6 +280,8 @@ void update_hk_data()
             }
             case PANELX_I:
             {
+                if(value > 4500)
+                    value = 4500;
                 full_sensor_list.get(2).sensor_list.get(0).sensor_avail = true;
                 full_sensor_list.get(2).sensor_list.get(0).sensor_data_buff = value;
                 full_sensor_list.get(2).sensor_list.get(0).sensor_is_updated = true;
@@ -285,6 +289,8 @@ void update_hk_data()
             }
             case PANELY_V:
             {
+                if(value > 8400)
+                    value = 8400;
                 full_sensor_list.get(1).sensor_list.get(1).sensor_avail = true;
                 full_sensor_list.get(1).sensor_list.get(1).sensor_data_buff = value;
                 full_sensor_list.get(1).sensor_list.get(1).sensor_is_updated = true;
@@ -292,6 +298,8 @@ void update_hk_data()
             }
             case PANELY_I:
             {
+                if(value > 4500)
+                    value = 4500;
                 full_sensor_list.get(2).sensor_list.get(1).sensor_avail = true;
                 full_sensor_list.get(2).sensor_list.get(1).sensor_data_buff = value;
                 full_sensor_list.get(2).sensor_list.get(1).sensor_is_updated = true;
@@ -299,6 +307,8 @@ void update_hk_data()
             }
             case BATT_V:
             {
+                if(value > 8400)
+                    value = 8400;
                 full_sensor_list.get(1).sensor_list.get(2).sensor_avail = true;
                 full_sensor_list.get(1).sensor_list.get(2).sensor_data_buff = value;
                 full_sensor_list.get(1).sensor_list.get(2).sensor_is_updated = true;
@@ -306,6 +316,8 @@ void update_hk_data()
             }
             case BATTIN_I:
             {
+                if(value > 4500)
+                    value = 4500;
                 full_sensor_list.get(2).sensor_list.get(2).sensor_avail = true;
                 full_sensor_list.get(2).sensor_list.get(2).sensor_data_buff = value;
                 full_sensor_list.get(2).sensor_list.get(2).sensor_is_updated = true;
@@ -313,20 +325,17 @@ void update_hk_data()
             }
             case BATTOUT_I:
             {
+                if(value > 4500)
+                    value = 4500;
                 full_sensor_list.get(2).sensor_list.get(3).sensor_avail = true;
                 full_sensor_list.get(2).sensor_list.get(3).sensor_data_buff = value;
                 full_sensor_list.get(2).sensor_list.get(3).sensor_is_updated = true;
                 break;
             }
-            case BATT_TEMP:
-            {
-                full_sensor_list.get(0).sensor_list.get(0).sensor_avail = true;
-                full_sensor_list.get(0).sensor_list.get(0).sensor_data_buff = value;
-                full_sensor_list.get(0).sensor_list.get(0).sensor_is_updated = true;
-                break;
-            }
             case EPS_TEMP:
             {
+                if(value > 100)
+                    value = 100;
                 full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
                 full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = value;
                 full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
@@ -334,6 +343,8 @@ void update_hk_data()
             }
             case COMS_V:
             {
+                if(value > 8400)
+                    value = 8400;
                 full_sensor_list.get(1).sensor_list.get(3).sensor_avail = true;
                 full_sensor_list.get(1).sensor_list.get(3).sensor_data_buff = value;
                 full_sensor_list.get(1).sensor_list.get(3).sensor_is_updated = true;
@@ -341,6 +352,8 @@ void update_hk_data()
             }
             case COMS_I:
             {
+                if(value > 4500)
+                    value = 4500;
                 full_sensor_list.get(2).sensor_list.get(4).sensor_avail = true;
                 full_sensor_list.get(2).sensor_list.get(4).sensor_data_buff = value;
                 full_sensor_list.get(2).sensor_list.get(4).sensor_is_updated = true;
@@ -348,6 +361,8 @@ void update_hk_data()
             }
             case PAY_V:
             {
+                if(value > 8400)
+                    value = 8400;
                 full_sensor_list.get(1).sensor_list.get(4).sensor_avail = true;
                 full_sensor_list.get(1).sensor_list.get(4).sensor_data_buff = value;
                 full_sensor_list.get(1).sensor_list.get(4).sensor_is_updated = true;
@@ -355,6 +370,8 @@ void update_hk_data()
             }
             case PAY_I:
             {
+                if(value > 4500)
+                    value = 4500;
                 full_sensor_list.get(2).sensor_list.get(5).sensor_avail = true;
                 full_sensor_list.get(2).sensor_list.get(5).sensor_data_buff = value;
                 full_sensor_list.get(2).sensor_list.get(5).sensor_is_updated = true;
@@ -362,6 +379,8 @@ void update_hk_data()
             }
             case OBC_V:
             {
+                if(value > 8400)
+                    value = 8400;
                 full_sensor_list.get(1).sensor_list.get(5).sensor_avail = true;
                 full_sensor_list.get(1).sensor_list.get(5).sensor_data_buff = value;
                 full_sensor_list.get(1).sensor_list.get(5).sensor_is_updated = true;
@@ -369,6 +388,8 @@ void update_hk_data()
             }
             case OBC_I:
             {
+                if(value > 4500)
+                    value = 4500;
                 full_sensor_list.get(2).sensor_list.get(6).sensor_avail = true;
                 full_sensor_list.get(2).sensor_list.get(6).sensor_data_buff = value;
                 full_sensor_list.get(2).sensor_list.get(6).sensor_is_updated = true;
@@ -376,6 +397,8 @@ void update_hk_data()
             }
             case COMS_TEMP:
             {
+                if(value > 100)
+                    value = 100;
                 full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
                 full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = value;
                 full_sensor_list.get(0).sensor_list.get(2).sensor_is_updated = true;
@@ -383,6 +406,8 @@ void update_hk_data()
             }
             case OBC_TEMP:
             {
+                if(value > 100)
+                    value = 100;
                 full_sensor_list.get(0).sensor_list.get(3).sensor_avail = true;
                 full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = value;
                 full_sensor_list.get(0).sensor_list.get(3).sensor_is_updated = true;
@@ -390,6 +415,8 @@ void update_hk_data()
             }
             case PAY_TEMP0:
             {
+                if(value > 100)
+                    value = 100;
                 full_sensor_list.get(0).sensor_list.get(4).sensor_avail = true;
                 full_sensor_list.get(0).sensor_list.get(4).sensor_data_buff = value;
                 full_sensor_list.get(0).sensor_list.get(4).sensor_is_updated = true;
@@ -397,6 +424,8 @@ void update_hk_data()
             }
             case PAY_PRESS:
             {
+                if(value > 2000)
+                    value = 2000;
                 full_sensor_list.get(4).sensor_list.get(0).sensor_avail = true;
                 full_sensor_list.get(4).sensor_list.get(0).sensor_data_buff = value;
                 full_sensor_list.get(4).sensor_list.get(0).sensor_is_updated = true;
@@ -404,6 +433,8 @@ void update_hk_data()
             }
             case PAY_ACCEL_X:
             {
+                if(value > 2000)
+                    value = 2000;
                 full_sensor_list.get(3).sensor_list.get(0).sensor_avail = true;
                 full_sensor_list.get(3).sensor_list.get(0).sensor_data_buff = value;
                 full_sensor_list.get(3).sensor_list.get(0).sensor_is_updated = true;
@@ -411,6 +442,8 @@ void update_hk_data()
             }
             case PAY_ACCEL_Y:
             {
+                if(value > 2000)
+                    value = 2000;
                 full_sensor_list.get(3).sensor_list.get(1).sensor_avail = true;
                 full_sensor_list.get(3).sensor_list.get(1).sensor_data_buff = value;
                 full_sensor_list.get(3).sensor_list.get(1).sensor_is_updated = true;
@@ -418,6 +451,8 @@ void update_hk_data()
             }
             case PAY_ACCEL_Z:
             {
+                if(value > 2000)
+                    value = 2000;
                 full_sensor_list.get(3).sensor_list.get(2).sensor_avail = true;
                 full_sensor_list.get(3).sensor_list.get(2).sensor_data_buff = value;
                 full_sensor_list.get(3).sensor_list.get(2).sensor_is_updated = true;
@@ -425,6 +460,8 @@ void update_hk_data()
             }
             case PAY_FL_PD0:
             {
+                if(value > 1024)
+                    value = 1024;
                 full_sensor_list.get(5).sensor_list.get(0).sensor_avail = true;
                 full_sensor_list.get(5).sensor_list.get(0).sensor_data_buff = value;
                 full_sensor_list.get(5).sensor_list.get(0).sensor_is_updated = true;
@@ -432,6 +469,8 @@ void update_hk_data()
             }
             case PAY_FL_PD1:
             {
+                if(value > 1024)
+                    value = 1024;
                 full_sensor_list.get(5).sensor_list.get(1).sensor_avail = true;
                 full_sensor_list.get(5).sensor_list.get(1).sensor_data_buff = value;
                 full_sensor_list.get(5).sensor_list.get(1).sensor_is_updated = true;
@@ -439,6 +478,8 @@ void update_hk_data()
             }
             case PAY_FL_PD2:
             {
+                if(value > 1024)
+                    value = 1024;
                 full_sensor_list.get(5).sensor_list.get(2).sensor_avail = true;
                 full_sensor_list.get(5).sensor_list.get(2).sensor_data_buff = value;
                 full_sensor_list.get(5).sensor_list.get(2).sensor_is_updated = true;
@@ -446,6 +487,8 @@ void update_hk_data()
             }
             case PAY_FL_PD3:
             {
+                if(value > 1024)
+                    value = 1024;
                 full_sensor_list.get(5).sensor_list.get(3).sensor_avail = true;
                 full_sensor_list.get(5).sensor_list.get(3).sensor_data_buff = value;
                 full_sensor_list.get(5).sensor_list.get(3).sensor_is_updated = true;
@@ -453,6 +496,8 @@ void update_hk_data()
             }
             case PAY_FL_PD4:
             {
+                if(value > 1024)
+                    value = 1024;
                 full_sensor_list.get(5).sensor_list.get(4).sensor_avail = true;
                 full_sensor_list.get(5).sensor_list.get(4).sensor_data_buff = value;
                 full_sensor_list.get(5).sensor_list.get(4).sensor_is_updated = true;
@@ -460,6 +505,8 @@ void update_hk_data()
             }
             case PAY_FL_PD5:
             {
+                if(value > 1024)
+                    value = 1024;
                 full_sensor_list.get(5).sensor_list.get(5).sensor_avail = true;
                 full_sensor_list.get(5).sensor_list.get(5).sensor_data_buff = value;
                 full_sensor_list.get(5).sensor_list.get(5).sensor_is_updated = true;
