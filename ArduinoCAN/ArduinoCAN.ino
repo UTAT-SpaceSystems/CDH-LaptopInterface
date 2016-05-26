@@ -339,13 +339,13 @@ void request_sensor_data()
     can_send_queue.push(message_out);
     message_out.is_ok = true;
     message_out.id = SUB1_ID5;
-    message_out.data[7] = (HK_TASK_ID << 4)|(SUB0_ID5);
+    message_out.data[7] = (HK_TASK_ID << 4)|(SUB1_ID5);
     message_out.data[6] = MT_COM;
     message_out.data[5] = REQ_HK;
     can_send_queue.push(message_out);
     message_out.is_ok = true;
     message_out.id = SUB2_ID5;
-    message_out.data[7] = (HK_TASK_ID << 4)|(SUB0_ID5);
+    message_out.data[7] = (HK_TASK_ID << 4)|(SUB2_ID5);
     message_out.data[6] = MT_COM;
     message_out.data[5] = REQ_HK;
     can_send_queue.push(message_out);

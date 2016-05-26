@@ -290,6 +290,21 @@ void draw()
             String[] frame = parse_data(in_string);
             if(frame[1] != "")
             {
+                int big_type = Integer.parseInt(frame[1].substring(2,4), 16);
+                int sensor_id = 0x88;  // dummy value, not currently used.
+                if(big_type == 1)
+                    sensor_id = Integer.parseInt(frame[1].substring(6,8), 16);    // Housekeeping message
+                //if(big_type == 0)
+                //    sensor_id = Integer.parseInt(frame[1].substring(4,6), 16);    // Sensor data message
+                byte i = 0;
+                byte index = 100;
+                for (i = 0; i < 58; i+=2)
+                {
+                    if(hk_def[i] == sensor_id)
+                    {
+                       index = i; 
+                    }
+                }
                 // Check for matching or default filter
                 if (filter.equals(frame[0]) || filter.equals("00"))
                 {
@@ -297,33 +312,19 @@ void draw()
                     if (can_stream.size() < MESSAGE_NUM)
                     {
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id +"  INDEX:" + index);
                     }
                     else
                     {
                         can_stream.remove();
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id + "  INDEX:" + index);
                     }
-                    int big_type = Integer.parseInt(frame[1].substring(2,4), 16);
-                    int sensor_id = 0x88;  // dummy value, not currently used.
-                    if(big_type == 1)
-                        sensor_id = Integer.parseInt(frame[1].substring(6,8), 16);    // Housekeeping message
-                    if(big_type == 0)
-                        sensor_id = Integer.parseInt(frame[1].substring(4,6), 16);    // Sensor data message
-                    byte i = 0;
-                    byte index = 100;
-                    for (i = 0; i < 59; i+=2)
-                    {
-                        if(hk_def[i] == sensor_id)
-                        {
-                           index = i; 
-                        }
-                    }
+
                     if(index < 100 && sensor_id != 0x88)
                     {
-                        hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
-                        hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
+                        hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
+                        hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
                     }
                 }
             }
@@ -352,7 +353,7 @@ void draw()
                     int sensor_id = Integer.parseInt(frame[1].substring(0,2), 16);
                     byte i = 0;
                     byte index = 100;
-                    for (i = 0; i < 59; i+=2)
+                    for (i = 0; i < 58; i+=2)
                     {
                         if(hk_def[i] == sensor_id)
                         {
@@ -970,7 +971,7 @@ void establishContact()
      time = new Date();
      log.print(time + "\t\t,");
      int value = 0;
-     for(int i = 0; i < 58; i+=2)
+     for(int i = 56; i >= 0; i-=2)
      {
          value = (int)hk_buffer[i];
          value |= ((int)hk_buffer[i + 1]) << 8;
