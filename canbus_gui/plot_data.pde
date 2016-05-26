@@ -336,9 +336,9 @@ void update_hk_data()
             {
                 if(value > 100)
                     value = 100;
-                full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
-                full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = value;
-                full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
+                full_sensor_list.get(0).sensor_list.get(0).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(0).sensor_data_buff = value;
+                full_sensor_list.get(0).sensor_list.get(0).sensor_is_updated = true;
                 break;
             }
             case COMS_V:
@@ -399,27 +399,27 @@ void update_hk_data()
             {
                 if(value > 100)
                     value = 100;
-                full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
-                full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = value;
-                full_sensor_list.get(0).sensor_list.get(2).sensor_is_updated = true;
+                full_sensor_list.get(0).sensor_list.get(1).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(1).sensor_data_buff = value;
+                full_sensor_list.get(0).sensor_list.get(1).sensor_is_updated = true;
                 break;
             }
             case OBC_TEMP:
             {
                 if(value > 100)
                     value = 100;
-                full_sensor_list.get(0).sensor_list.get(3).sensor_avail = true;
-                full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = value;
-                full_sensor_list.get(0).sensor_list.get(3).sensor_is_updated = true;
+                full_sensor_list.get(0).sensor_list.get(2).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(2).sensor_data_buff = value;
+                full_sensor_list.get(0).sensor_list.get(2).sensor_is_updated = true;
                 break;
             }
             case PAY_TEMP0:
             {
                 if(value > 100)
                     value = 100;
-                full_sensor_list.get(0).sensor_list.get(4).sensor_avail = true;
-                full_sensor_list.get(0).sensor_list.get(4).sensor_data_buff = value;
-                full_sensor_list.get(0).sensor_list.get(4).sensor_is_updated = true;
+                full_sensor_list.get(0).sensor_list.get(3).sensor_avail = true;
+                full_sensor_list.get(0).sensor_list.get(3).sensor_data_buff = value;
+                full_sensor_list.get(0).sensor_list.get(3).sensor_is_updated = true;
                 break;
             }
             case PAY_PRESS:

@@ -327,7 +327,7 @@ void draw()
                        
                         if(sensor_id == 31 || sensor_id == 32 || sensor_id == 33)
                         {
-                            hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);
+                            hk_buffer[index] = Integer.parseInt(frame[1].substring(14,16), 16);
                             if(value > 4)
                                 hk_buffer[index + 1] = 4;
                             else
@@ -335,8 +335,8 @@ void draw()
                         }
                         else
                         {
-                            hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(12,14), 16);
-                            hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(14,16), 16);                         
+                            hk_buffer[index + 1] = Integer.parseInt(frame[1].substring(12,14), 16);
+                            hk_buffer[index] = Integer.parseInt(frame[1].substring(14,16), 16);                         
                           
                         }
 
@@ -903,11 +903,10 @@ void resetFormat()
 void sensor_init()
 {
       // Tempreture sensors
-      temp.add_sensor(new Sensor("BATT_TEMP", 0x09, plot_red));
-      temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_green));
-      temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_blue));
-      temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_yellow));
-      temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_pink));
+      temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_red));
+      temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_green));
+      temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_blue));
+      temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_yellow));
 
       // Voltage sensors
       volt.add_sensor(new Sensor("PANELX_V", 0x01, plot_red));

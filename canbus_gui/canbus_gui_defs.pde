@@ -280,5 +280,5 @@ final int PAY_FL_PD11 = 0x27;
  *
  */
  
-byte hk_buffer[] = new byte[58];
+int hk_buffer[] = new int[58];
 int hk_def[] = new int[58];
