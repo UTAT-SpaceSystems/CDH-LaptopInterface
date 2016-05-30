@@ -330,7 +330,7 @@ byte packet_receivedf;
 byte tx_fail_count;
 byte ack_acquired;
 byte transmitting_sequence_control;
-byte tm_to_downlink[PACKET_LENGTH];
+byte tc_to_uplink[PACKET_LENGTH];
 
 // BIG_ARRAY
 uint8_t hk_array[76];

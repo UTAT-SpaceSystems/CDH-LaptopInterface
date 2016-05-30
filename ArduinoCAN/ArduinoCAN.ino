@@ -1,5 +1,5 @@
 /*
-    Author: Omar Abdeldayem, Steven Yin, Keenan Burnett, Albert Xie
+    Author: Keenan Burnett, Steven Yin, Omar Abdeldayem, Albert Xie
     ***********************************************************************
     *   FILE NAME:      ArduinoCAN.ino
     *
@@ -949,7 +949,7 @@ byte check_packet(void)
     return 0x00;
 }
 
-// The packet to be transmitted is assumed to be tm_to_downlink[] and be 152 bytes long.
+// The packet to be transmitted is assumed to be tc_to_uplink[] and be 152 bytes long.
 byte transmit_packet(void)
 {
     //if(packetsFifo.isEmpty())
@@ -957,7 +957,7 @@ byte transmit_packet(void)
     //packet temp;
     //temp = packetsFifo.pop();
     //transceiver_send(temp.array + 76, DEVICE_ADDRESS, 76);
-    transceiver_send(tm_to_downlink + 76, DEVICE_ADDRESS, 76);
+    transceiver_send(tc_to_uplink + 76, DEVICE_ADDRESS, 76);
     return 1;
 }
 
@@ -1008,25 +1008,62 @@ void setup_fake_tc(void)
     service_type = 3;           // HK Service
     service_sub_type = 9;       // Req HK Definition report
     // Packet Header
-    tm_to_downlink[151] = ((version & 0x07) << 5) | ((type & 0x01) << 4) | (0x08);
-    tm_to_downlink[150] = HK_TASK_ID;
-    tm_to_downlink[149] = sequence_flags;
-    tm_to_downlink[148] = transmitting_sequence_control;
-    tm_to_downlink[147] = 0x00;
-    tm_to_downlink[146] = PACKET_LENGTH - 1;
+    tc_to_uplink[151] = ((version & 0x07) << 5) | ((type & 0x01) << 4) | (0x08);
+    tc_to_uplink[150] = HK_TASK_ID;
+    tc_to_uplink[149] = sequence_flags;
+    tc_to_uplink[148] = transmitting_sequence_control;
+    tc_to_uplink[147] = 0x00;
+    tc_to_uplink[146] = PACKET_LENGTH - 1;
     version = 1;
     // Data Field Header
-    tm_to_downlink[145] = ((version & 0x07) << 4) | 0x8A;
-    tm_to_downlink[144] = service_type;
-    tm_to_downlink[143] = service_sub_type;
-    tm_to_downlink[142] = HK_GROUND_ID;
-    tm_to_downlink[140] = 0;
-    tm_to_downlink[139] = 0;
-    pec = fletcher16(tm_to_downlink + 2, 150);
-    tm_to_downlink[1] = (byte)(pec >> 8);
-    tm_to_downlink[0] = (byte)(pec);
+    tc_to_uplink[145] = ((version & 0x07) << 4) | 0x8A;
+    tc_to_uplink[144] = service_type;
+    tc_to_uplink[143] = service_sub_type;
+    tc_to_uplink[142] = HK_GROUND_ID;
+    tc_to_uplink[140] = 0;
+    tc_to_uplink[139] = 0;
+    pec = fletcher16(tc_to_uplink + 2, 150);
+    tc_to_uplink[1] = (byte)(pec >> 8);
+    tc_to_uplink[0] = (byte)(pec);
     
-    tm_to_downlink[75] = 0x88;      // Indicator of this being the lower 76 bytes.
+    tc_to_uplink[75] = 0x88;      // Indicator of this being the lower 76 bytes.
+    
+    return;
+}
+
+// Ideally you should create a packetize_send_telecommand() like on the OBC
+// and have a buffer for the outgoing telecommands but since I'm strapped for time,
+// this will have to do.
+void setup_deploy_command(void)
+{
+    byte version, type, sequence_flags, service_type, service_sub_type, i;
+    unsigned int pec;
+    version = 0;
+    type = 1;
+    sequence_flags = 0x03;
+    service_type = 69;           // K Service
+    service_sub_type = 13;       // Antenna Deploy
+    // Packet Header
+    tc_to_uplink[151] = ((version & 0x07) << 5) | ((type & 0x01) << 4) | (0x08);
+    tc_to_uplink[150] = OBC_PACKET_ROUTER_ID;
+    tc_to_uplink[149] = sequence_flags;
+    tc_to_uplink[148] = transmitting_sequence_control;
+    tc_to_uplink[147] = 0x00;
+    tc_to_uplink[146] = PACKET_LENGTH - 1;
+    version = 1;
+    // Data Field Header
+    tc_to_uplink[145] = ((version & 0x07) << 4) | 0x8A;
+    tc_to_uplink[144] = service_type;
+    tc_to_uplink[143] = service_sub_type;
+    tc_to_uplink[142] = GROUND_PACKET_ROUTER_ID;
+    tc_to_uplink[141] = 0;
+    tc_to_uplink[140] = 0;
+    tc_to_uplink[139] = 0;
+    pec = fletcher16(tc_to_uplink + 2, 150);
+    tc_to_uplink[1] = (byte)(pec >> 8);
+    tc_to_uplink[0] = (byte)(pec);
+    
+    tc_to_uplink[75] = 0x88;      // Indicator of this being the lower 76 bytes.
     
     return;
 }
