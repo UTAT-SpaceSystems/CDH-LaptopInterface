@@ -53,9 +53,9 @@
 #include "registers.h"
 
 /* Queue for Messages to Send */
-#if !PROGRAM_SELECT
-QueueArray <packet> packetsFifo;
-#endif
+// #if !PROGRAM_SELECT
+// QueueArray <packet> packetsFifo;
+// #endif
 
 void hkDefInitialize(void);
 void establishContact();
@@ -73,9 +73,9 @@ void setup()
 {
     Serial.begin(9600);
     hkDefInitialize();
-#if !PROGRAM_SELECT
-    packetsFifo.setPrinter(Serial);
-#endif
+// #if !PROGRAM_SELECT
+//     packetsFifo.setPrinter(Serial);
+// #endif
     establishContact();
     
 #if PROGRAM_SELECT
@@ -304,6 +304,12 @@ void handleCommand(String in)
     }
     switch(command)
     {
+        case DEPLOY_ANTENNA:
+        {
+            Serial.print("*Deploying Antenna!\n");
+            deploy_antennaf = 3;
+            break;
+        }
 #if PROGRAM_SELECT
         case REQ_SENSOR_DATA:
         {
@@ -625,7 +631,14 @@ void transceiver_run(void)
         cmd_str(SFRX);
         cmd_str(SFTX);
         delay(5);
+        if(deploy_antennaf)
+            setup_deploy_command();
         transmit_packet();
+        if(deploy_antennaf)
+        {
+            setup_fake_tc();
+            deploy_antennaf--;
+        }
         lastTransmit = millis();
     }
     lastCycle = millis();
@@ -1059,6 +1072,11 @@ void setup_deploy_command(void)
     tc_to_uplink[141] = 0;
     tc_to_uplink[140] = 0;
     tc_to_uplink[139] = 0;
+    tc_to_uplink[135] = 0;
+    tc_to_uplink[134] = 0;
+    tc_to_uplink[133] = 0;
+    tc_to_uplink[132] = 0;
+
     pec = fletcher16(tc_to_uplink + 2, 150);
     tc_to_uplink[1] = (byte)(pec >> 8);
     tc_to_uplink[0] = (byte)(pec);
@@ -1330,6 +1348,7 @@ void decode_memory(void)
         //     processMemoryCheck();
         //     break;
         case DOWNLINKING_SCIENCE:
+            break;
             //log_science();
     }
     return;

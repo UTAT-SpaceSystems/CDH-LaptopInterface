@@ -21,7 +21,7 @@ Date          Author              Description of Change
 #include "QueueArray.h"
 
 /* PROGRAM SELECTION */
-#define PROGRAM_SELECT  1// 1 == CAN-BUS, 0 == TRANSCEIVER
+#define PROGRAM_SELECT  0// 1 == CAN-BUS, 0 == TRANSCEIVER
 
 /* PARAMETER DEFINITIONS */
 #define PANELX_V				0x01
@@ -184,8 +184,9 @@ Date          Author              Description of Change
 #define SCHED_GROUND_ID					0x15
 
 // Commands DEFINE
-#define REQ_SENSOR_DATA   0x00
-#define GET_HK_DATA    0x01
+#define REQ_SENSOR_DATA   	0x00
+#define GET_HK_DATA    		0x01
+#define DEPLOY_ANTENNA		0x02
 
 /* CAN DEFINITIONS */
 
@@ -342,6 +343,7 @@ uint8_t req_time = 0;
 
 #endif
 
+uint8_t deploy_antennaf = 0;
 // The FIFO buffer for serial output(trans)
 QueueArray<uint32_t> trans_serial_queue;
 
