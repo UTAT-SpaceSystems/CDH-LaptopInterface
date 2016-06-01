@@ -648,7 +648,7 @@ void transceiver_run(void)
         }
         if(deploy_antennaf)
         {
-            transmit_timeout = 500;
+            transmit_timeout = 1000;
             setup_deploy_command();
             deploy_antennaf--;
         }
