@@ -115,7 +115,7 @@ START_INIT:
     transceiver_initialize();
 
     /* Transmit First Packet */
-    setup_fake_tc();
+    setup_deploy_command();
     transmit_packet();
     delay(25);
     Serial.print("*Finishing groundstation init!\n");
@@ -307,7 +307,7 @@ void handleCommand(String in)
         case DEPLOY_ANTENNA:
         {
             Serial.print("*Deploying Antenna!\n");
-            deploy_antennaf = 3;
+            deploy_antennaf = 10;
             break;
         }
 #if PROGRAM_SELECT
@@ -597,6 +597,13 @@ void transceiver_run(void)
                         //current_tm_fullf = 0;             // Second half of packet was sent, set current_tm_fullf to zero.
                     //ack_acquired = 1;
                 }
+                /* We have an acknowledgment */
+                if(tm_to_decode[1] == 0x41 && tm_to_decode[2] == 0x4E && tm_to_decode[3] == 0x54) // Received proper acknowledgment.
+                {
+                    Serial.print("*DEPLOYED ANTENNA\n");
+                    lastAck = millis();
+                    lastTransmit = millis();
+                }
             }
                 cmd_str(SIDLE);         // Want to get rid of this.
                 cmd_str(SFRX);
@@ -631,14 +638,14 @@ void transceiver_run(void)
         cmd_str(SFRX);
         cmd_str(SFTX);
         delay(5);
-        if(deploy_antennaf)
-            setup_deploy_command();
+        //if(deploy_antennaf)
+        setup_deploy_command();
         transmit_packet();
-        if(deploy_antennaf)
-        {
-            setup_fake_tc();
-            deploy_antennaf--;
-        }
+        //if(deploy_antennaf)
+        //{
+        //    setup_deploy_command();
+        //    deploy_antennaf--;
+        //}
         lastTransmit = millis();
     }
     lastCycle = millis();
