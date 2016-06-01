@@ -100,7 +100,10 @@ START_INIT:
 
 #if !PROGRAM_SELECT
     Serial.print("*Transceriver mode!\n");
-    Serial.print("*Strating groundstation init!\n");
+    Serial.print("*Starting groundstation init!\n");
+
+    transmit_timeout = TRANSMIT_TIMEOUT;    // Set to default which is mostly for receiving.
+
     /* Configure Pins */
     pinMode(pin_RST_TRX, OUTPUT);
     pinMode(pin_SS, OUTPUT);
@@ -115,7 +118,7 @@ START_INIT:
     transceiver_initialize();
 
     /* Transmit First Packet */
-    setup_deploy_command();
+    setup_fake_tc();
     transmit_packet();
     delay(25);
     Serial.print("*Finishing groundstation init!\n");
@@ -307,7 +310,7 @@ void handleCommand(String in)
         case DEPLOY_ANTENNA:
         {
             Serial.print("*Deploying Antenna!\n");
-            deploy_antennaf = 10;
+            deploy_antennaf = 10;   // Send 10 deploy command packets to make sure this works.
             break;
         }
 #if PROGRAM_SELECT
@@ -638,14 +641,18 @@ void transceiver_run(void)
         cmd_str(SFRX);
         cmd_str(SFTX);
         delay(5);
-        //if(deploy_antennaf)
-        setup_deploy_command();
+        if(!deploy_antennaf)
+        {
+            transmit_timeout = TRANSMIT_TIMEOUT;
+            setup_fake_tc();
+        }
+        if(deploy_antennaf)
+        {
+            transmit_timeout = 500;
+            setup_deploy_command();
+            deploy_antennaf--;
+        }
         transmit_packet();
-        //if(deploy_antennaf)
-        //{
-        //    setup_deploy_command();
-        //    deploy_antennaf--;
-        //}
         lastTransmit = millis();
     }
     lastCycle = millis();
