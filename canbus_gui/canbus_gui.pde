@@ -41,7 +41,7 @@ void settings()
 void setup()
 {   
     // HK Definition
-    hk_def[57] = PAY_FL_PD5;
+    hk_def[57] = PAY_FL_PD5; //<>//
     hk_def[56] = PAY_FL_PD5;
     hk_def[55] = PAY_FL_PD4;
     hk_def[54] = PAY_FL_PD4;
@@ -100,7 +100,7 @@ void setup()
     hk_def[1] = PAY_FL_PD0;
     hk_def[0] = PAY_FL_PD0;
     // Setup the com port
-    if(Serial.list().length == 0)
+    if(Serial.list().length == 0) //<>//
     {
        JOptionPane.showMessageDialog(null,"No COM device connectd, existing.","UTAT",JOptionPane.ERROR_MESSAGE);
        System.exit(0);
@@ -136,7 +136,10 @@ void setup()
     DELTA_X = (displayWidth - 400)/(T_MINUS/(UPDATE_INTERVAL/1000));
     
     // Baud rate must match the Arduino serial baud rate
-    baud_rate = 9600;
+    if(mode == 1)
+      baud_rate = 4800;
+    if(mode == 0)
+      baud_rate = 9600;
     
     // Message filtering default
     filter = "00";
@@ -199,7 +202,7 @@ void setup()
 /*
 * Draw function
 */
-void draw()
+void draw() //<>//
 {
     //Defaults
     smooth();
@@ -226,7 +229,7 @@ void draw()
        // Start the Serial
        arduino = new Serial(this, port_selection, baud_rate);
        // Since this is a one time setup, we state that we now have set up the connection.
-       is_started = true;
+       is_started = true; //<>//
     }
     
     establishContact();
@@ -347,26 +350,28 @@ void draw()
         }
         else if(in_string.charAt(0) == '?')    // Received transceiver data!
         {
-            String[] frame = parse_data_trans(in_string);
+            String[] frame = parse_data_trans(in_string); //<>//
             if(frame[1] != "")
             {
                 // Check for matching or default filter
                 if (filter.equals(frame[0]) || filter.equals("00"))
                 {
+                    int sensor_id = Integer.parseInt(frame[1].substring(0,2), 16);
                     // Stream size check
                     if (can_stream.size() < MESSAGE_NUM)
                     {
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) +  "            DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) +  " DATA: " + frame[1]);
+                        //can_stream.add("  SID: " + sensor_id);
                     }
                     else
                     {
                         can_stream.remove();
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) +  "            DATA: " + frame[1]);
+                        can_stream.add("TIME: " + time_f.format(time) +  " DATA: " + frame[1]);
+                        //can_stream.add("  SID: " + sensor_id);
                     }
-                
-                    int sensor_id = Integer.parseInt(frame[1].substring(0,2), 16);
+                    
                     byte i = 0;
                     byte index = 100;
                     for (i = 0; i < 58; i+=2)
@@ -378,8 +383,8 @@ void draw()
                     }
                     if(index < 100)
                     {
-                        hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(2,4), 16);
-                        hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(4,6), 16);
+                        hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(2,4), 16);
+                        hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(4,6), 16);
                     }  
               }
             }
@@ -945,7 +950,7 @@ void sensor_init()
 /*
 * Handshake with arduino clear input buffer and get ready for input
 */
-void establishContact()
+void establishContact() //<>//
 {
   if(firstContact == false)
   {

@@ -156,7 +156,7 @@ void loop()
 
 #if !PROGRAM_SELECT
     transceiver_run();
-    parseTransMessage();
+    //parseTransMessage();
 #endif
 
     // Checks for GUI serial inputs
@@ -274,21 +274,21 @@ void parseCANMessage()
   up by the GUI program over the COM port that's being used as a serial monitor.
   get_hk_data() gets the data ready for this step.
 */
-void parseTransMessage()
-{
-    if(!trans_serial_queue.isEmpty())
-    {
-        byte msg = 0;
-        uint32_t buff = trans_serial_queue.pop();
-        Serial.print('?');
-        for(int i = 2; i >= 0; i--)
-        {
-            msg = (byte)(buff >> (i * 8));
-            print_hex((int)msg, 8);
-        }
-        Serial.print("\n");
-    }
-}
+// void parseTransMessage()
+// {
+//     if(!trans_serial_queue.isEmpty())
+//     {
+//         byte msg = 0;
+//         uint32_t buff = trans_serial_queue.pop();
+//         Serial.print('?');
+//         for(int i = 2; i >= 0; i--)
+//         {
+//             msg = (byte)(buff >> (i * 8));
+//             print_hex((int)msg, 8);
+//         }
+//         Serial.print("\n");
+//     }
+// }
 
 /**
 * Handle the commands which requires arduino to handle
@@ -370,16 +370,24 @@ void request_sensor_data()
 void get_hk_data()
 {
     uint32_t buff = 0;
+    byte msg = 0;
     for(int i = 57; i > 0; i -= 2)
     {
         buff = ((uint32_t)'?') << 24;
-        buff = buff | ((uint32_t)(hk_def[i]) << 16);   // sensor ID.
-        buff = buff | ((uint32_t)hk_array[i] << 8);
+        buff = buff | (((uint32_t)hk_def[i]) << 16);   // sensor ID.
+        buff = buff | (((uint32_t)hk_array[i]) << 8);
         buff = buff | (uint32_t)hk_array[i-1];
-        trans_serial_queue.push(buff);
-        buff = 0;
+        Serial.print('?');
+        for(int j = 2; j >= 0; j--)         // Inserted this instead of using parseTransMessage().
+        {
+            msg = (byte)(buff >> (j * 8));
+            print_hex((int)msg, 8);
+        }
+        Serial.print("\n");
+        delay(1);                           // Allow message to be parsed in the GUI.
     }
 }
+
 #endif
 
 /**
@@ -1324,7 +1332,7 @@ void decode_housekeeping(void)
         case HK_REPORT:
             for(i = 0; i < 58; i++)
             {
-                hk_array[i] = tm_to_decode[i + 76];
+                hk_array[i] = tm_to_decode[i + 78];
             }
             Serial.println("*HOUSEKEEPING UPDATED\n");
             is_hk_ready = true;
