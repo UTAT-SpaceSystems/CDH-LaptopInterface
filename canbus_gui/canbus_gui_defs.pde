@@ -20,7 +20,7 @@ import processing.serial.*;
 import java.util.Arrays;
 
 // Working mode CAN=0 TRANS=1
-int mode = 0;
+int mode = 1;
 
 // The time object
 Date time;
