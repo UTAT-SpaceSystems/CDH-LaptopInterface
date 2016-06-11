@@ -219,6 +219,7 @@ final color plot_red = color(255, 0, 0);
 final color plot_green = color(0, 255, 0);
 final color plot_blue = color(0, 0, 255);
 final color plot_yellow = color(255, 255, 0);
+final color plot_white = color(255, 255, 255);
 final color plot_pink = color(255, 0, 255);
 final color plot_cyan = color(0, 255, 255);
 final color plot_orange = color(255, 128, 0);

@@ -310,7 +310,7 @@ void handleCommand(String in)
         case DEPLOY_ANTENNA:
         {
             Serial.print("*Deploying Antenna!\n");
-            deploy_antennaf = 10;   // Send 10 deploy command packets to make sure this works.
+            deploy_antennaf = 20;   // Send 10 deploy command packets to make sure this works.
             break;
         }
 #if PROGRAM_SELECT
@@ -653,14 +653,17 @@ void transceiver_run(void)
         {
             transmit_timeout = TRANSMIT_TIMEOUT;
             setup_fake_tc();
+            transmit_packet();
         }
         if(deploy_antennaf)
         {
             transmit_timeout = 1000;
+            //deployAntennaCommand();
             setup_deploy_command();
+            transmit_packet();
             deploy_antennaf--;
         }
-        transmit_packet();
+
         lastTransmit = millis();
     }
     lastCycle = millis();
@@ -973,6 +976,33 @@ void prepareAck(void)
     tx_mode = 1;
     rx_mode = 0;
     lastTransmit = millis();
+    return;
+}
+
+void deployAntennaCommand(void)
+{
+    char* ackMessage = "ANT";
+    byte ackAddress = 0xA5, i;
+    cmd_str(SIDLE);
+    cmd_str(SFTX);
+    
+    // Reset FIFO registers
+    reg_write2F(TXFIRST, 0x00);
+    // Put the ACK Packet in the FIFO
+    dir_FIFO_write(0, (3 + 2));
+    dir_FIFO_write(1, ackAddress);
+    
+    for(i = 0; i < 3; i++)
+        dir_FIFO_write(i+2, ackMessage[i]);
+    
+    reg_write2F(TXFIRST, 0);
+    reg_write2F(TXLAST, (3 + 3));
+    reg_write2F(RXFIRST, 0x00);
+    reg_write2F(RXLAST, 0x00);
+    tx_mode = 1;
+    rx_mode = 0;
+    lastTransmit = millis();
+    cmd_str(STX);
     return;
 }
 

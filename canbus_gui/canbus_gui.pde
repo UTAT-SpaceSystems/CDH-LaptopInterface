@@ -173,7 +173,7 @@ void setup()
     full_sensor_list.add(photo);
 
     // Boundaries for temperature sensors
-    full_sensor_list.get(0).boundary_high = 100;
+    full_sensor_list.get(0).boundary_high = 80;
     full_sensor_list.get(0).boundary_low = 0;  
 
     // Boundaries for voltage sensors
@@ -181,7 +181,7 @@ void setup()
     full_sensor_list.get(1).boundary_low = 0;
     
     // Boundaries for current sensors
-    full_sensor_list.get(2).boundary_high = 4500;
+    full_sensor_list.get(2).boundary_high = 1000;
     full_sensor_list.get(2).boundary_low = 0;
     
     // Boundaries for acceleration
@@ -316,13 +316,13 @@ void draw() //<>//
                     if (can_stream.size() < MESSAGE_NUM)
                     {
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id +"  INDEX:" + index + "  VALUE: " + value);
+                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id + "  INDEX:" + index);
                     }
                     else
                     {
                         can_stream.remove();
                         time = new Date();
-                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id + "  INDEX:" + index + "  VALUE: " + value);
+                        can_stream.add("TIME: " + time_f.format(time) + "            MOB_ID: " + frame[0] + "            DATA: " + frame[1] + "  SID:" + sensor_id + "  INDEX:" + index);
                     }
 
                     if(index < 100 && sensor_id != 0x88)
@@ -383,8 +383,8 @@ void draw() //<>//
                     }
                     if(index < 100)
                     {
-                        hk_buffer[index + 1] = (byte)Integer.parseInt(frame[1].substring(2,4), 16);
-                        hk_buffer[index] = (byte)Integer.parseInt(frame[1].substring(4,6), 16);
+                        hk_buffer[index + 1] = Integer.parseInt(frame[1].substring(2,4), 16);
+                        hk_buffer[index] = Integer.parseInt(frame[1].substring(4,6), 16);
                     }  
               }
             }
@@ -426,9 +426,12 @@ String[] parse_data(String str)
     String message = "";
     values[0] = raw[0];
 
-    for(int i = 1; i <= 8; i++)
+    if(raw.length >= 8)
     {
-        message += raw[i];
+        for(int i = 1; i <= 8; i++)
+        {
+            message += raw[i];
+        }
     }
     values[1] = message;
 
@@ -910,7 +913,7 @@ void sensor_init()
       // Tempreture sensors
       temp.add_sensor(new Sensor("EPS_TEMP", 0x0A, plot_red));
       temp.add_sensor(new Sensor("COMS_TEMP", 0x12, plot_green));
-      temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_blue));
+      temp.add_sensor(new Sensor("OBC_TEMP", 0x13, plot_orange));
       temp.add_sensor(new Sensor("PAY_TEMP0", 0x14, plot_yellow));
 
       // Voltage sensors
@@ -924,7 +927,7 @@ void sensor_init()
       // Current sensors
       curr.add_sensor(new Sensor("PANELX_I", 0x02, plot_red));
       curr.add_sensor(new Sensor("PANELY_I", 0x04, plot_green));
-      curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_blue));
+      curr.add_sensor(new Sensor("BATTIN_I", 0x07, plot_white));
       curr.add_sensor(new Sensor("BATTOUT_I", 0x08, plot_yellow));
       curr.add_sensor(new Sensor("COMS_I", 0x0C, plot_pink));
       curr.add_sensor(new Sensor("PAY_I", 0x0E, plot_cyan));
@@ -933,7 +936,7 @@ void sensor_init()
       // Acceleration sensors
       acce.add_sensor(new Sensor("PAY_ACCEL_X", 0x1B, plot_red));
       acce.add_sensor(new Sensor("PAY_ACCEL_Y", 0x65, plot_green));
-      acce.add_sensor(new Sensor("PAY_ACCEL_Z", 0x66, plot_blue));
+      acce.add_sensor(new Sensor("PAY_ACCEL_Z", 0x66, plot_yellow));
       
       // Pressure sensors
       pres.add_sensor(new Sensor("PAY_PRESS", 0x1A, plot_red));
@@ -941,7 +944,7 @@ void sensor_init()
       // Photodiode sensors
       photo.add_sensor(new Sensor("PAY_FL_PD0", 0x1C, plot_red));
       photo.add_sensor(new Sensor("PAY_FL_PD1", 0x1D, plot_green));
-      photo.add_sensor(new Sensor("PAY_FL_PD2", 0x1E, plot_blue));
+      photo.add_sensor(new Sensor("PAY_FL_PD2", 0x1E, plot_cyan));
       photo.add_sensor(new Sensor("PAY_FL_PD3", 0x1F, plot_yellow));
       photo.add_sensor(new Sensor("PAY_FL_PD4", 0x20, plot_pink));
       photo.add_sensor(new Sensor("PAY_FL_PD5", 0x21, plot_orange));
